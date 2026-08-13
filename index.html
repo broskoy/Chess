@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web Chess Port</title>
+    <style>
+        body { 
+            background-color: #222;
+            color: white; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            font-family: sans-serif;
+        }
+        #board { 
+            display: grid; 
+            grid-template-columns: repeat(8, 60px); 
+            grid-template-rows: repeat(8, 60px);
+            border: 5px solid #444;
+            user-select: none;
+        }
+        .tile { 
+            width: 60px; 
+            height: 60px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 40px; 
+            cursor: pointer; 
+        }
+        .white-tile { background-color: #EEEED2; color: black; }
+        .black-tile { background-color: #769656; color: black; } 
+        .selected { background-color: rgba(255, 255, 0, 0.5) !important; }
+        .highlight { 
+            position: relative;
+        }
+        .highlight::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="board"></div>
+    <p style="color: #888; margin-top: 10px;">Click to move. White goes first.</p>
+
+    <script>
+        // --- GAME LOGIC (Converted from TypeScript) ---
+        class ChessGame {
+            constructor() {
+                this.turn = 'white';
+                this.VECTORS = {
+                    ortho: [[1, 0], [-1, 0], [0, 1], [0, -1]],
+                    diag:  [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+                    knight: [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
+                };
+                this.board = this.initializeBoard();
+            }
+
+            initializeBoard() {
+                const newBoard = Array(8).fill(null).map(() => Array(8).fill(null));
+                const setupRow = (row, color, pieces) => {
+                    pieces.forEach((type, col) => {
+                        newBoard[row][col] = { type, color };
+                    });
+                };
+
+                const backRank = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+                
+                setupRow(0, 'black', backRank);
+                setupRow(1, 'black', Array(8).fill('pawn'));
+                setupRow(6, 'white', Array(8).fill('pawn'));
+                setupRow(7, 'white', backRank);
+
+                return newBoard;
+            }
+
+            getPiece(row, col) {
+                if (!this.inBounds(row, col)) return null;
+                return this.board[row][col];
+            }
+
+            getValidMoves(row, col) {
+                const piece = this.getPiece(row, col);
+                if (!piece) return [];
+
+                const moves = [];
+                const isWhite = piece.color === 'white';
+
+                // 1. Pawns
+                if (piece.type === 'pawn') {
+                    const direction = isWhite ? -1 : 1; 
+                    const startRow = isWhite ? 6 : 1;
+
+                    // Forward 1
+                    if (this.isEmpty(row + direction, col)) {
+                        moves.push({ r: row + direction, c: col });
+                        // Forward 2
+                        if (row === startRow && this.isEmpty(row + (direction * 2), col)) {
+                            moves.push({ r: row + (direction * 2), c: col });
+                        }
+                    }
+                    // Captures
+                    [[direction, 1], [direction, -1]].forEach(([dr, dc]) => {
+                        if (this.isEnemy(row + dr, col + dc, piece.color)) {
+                            moves.push({ r: row + dr, c: col + dc });
+                        }
+                    });
+                    return moves;
+                }
+
+                // 2. Others
+                let vectors = [];
+                let isSliding = false;
+
+                switch (piece.type) {
+                    case 'rook':   vectors = this.VECTORS.ortho; isSliding = true; break;
+                    case 'bishop': vectors = this.VECTORS.diag;  isSliding = true; break;
+                    case 'queen':  vectors = [...this.VECTORS.ortho, ...this.VECTORS.diag]; isSliding = true; break;
+                    case 'knight': vectors = this.VECTORS.knight; isSliding = false; break;
+                    case 'king':   vectors = [...this.VECTORS.ortho, ...this.VECTORS.diag]; isSliding = false; break;
+                }
+
+                for (const [dr, dc] of vectors) {
+                    let r = row + dr;
+                    let c = col + dc;
+
+                    while (this.inBounds(r, c)) {
+                        const target = this.board[r][c];
+                        if (!target) {
+                            moves.push({ r, c });
+                        } else {
+                            if (target.color !== piece.color) moves.push({ r, c });
+                            break; 
+                        }
+                        if (!isSliding) break;
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                return moves;
+            }
+
+            move(fromR, fromC, toR, toC) {
+                const validMoves = this.getValidMoves(fromR, fromC);
+                const isValid = validMoves.some(m => m.r === toR && m.c === toC);
+
+                if (!isValid) return false;
+
+                this.board[toR][toC] = this.board[fromR][fromC];
+                this.board[fromR][fromC] = null;
+                this.turn = this.turn === 'white' ? 'black' : 'white';
+                return true;
+            }
+
+            inBounds(r, c) { return r >= 0 && c >= 0 && r < 8 && c < 8; }
+            isEmpty(r, c) { return this.inBounds(r, c) && this.board[r][c] === null; }
+            isEnemy(r, c, myColor) { return this.inBounds(r, c) && this.board[r][c] !== null && this.board[r][c].color !== myColor; }
+        }
+
+        // --- UI LOGIC ---
+        class ChessUI {
+            constructor(containerId) {
+                this.game = new ChessGame();
+                this.boardElement = document.getElementById(containerId);
+                this.selectedSquare = null;
+                
+                this.symbols = {
+                    'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
+                    'black-king': '♚', 'black-queen': '♛', 'black-rook': '♜', 'black-bishop': '♝', 'black-knight': '♞', 'black-pawn': '♟'
+                };
+
+                this.renderBoard();
+            }
+
+            renderBoard() {
+                this.boardElement.innerHTML = ''; 
+
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const tile = document.createElement('div');
+                        const isDark = (r + c) % 2 === 1;
+                        tile.className = `tile ${isDark ? 'black-tile' : 'white-tile'}`;
+                        
+                        const piece = this.game.getPiece(r, c);
+                        if (piece) {
+                            tile.textContent = this.symbols[`${piece.color}-${piece.type}`];
+                            tile.style.color = piece.color === 'white' ? '#fff' : '#000';
+                            if (piece.color === 'white') tile.style.textShadow = '0 0 2px #000';
+                        }
+
+                        tile.onclick = () => this.handleTileClick(r, c);
+
+                        // Highlights
+                        if (this.selectedSquare && this.selectedSquare.r === r && this.selectedSquare.c === c) {
+                            tile.classList.add('selected');
+                        }
+                        if (this.selectedSquare) {
+                            const validMoves = this.game.getValidMoves(this.selectedSquare.r, this.selectedSquare.c);
+                            if (validMoves.some(m => m.r === r && m.c === c)) {
+                                tile.classList.add('highlight');
+                            }
+                        }
+                        this.boardElement.appendChild(tile);
+                    }
+                }
+            }
+
+            handleTileClick(r, c) {
+                // 1. Deselect
+                if (this.selectedSquare && this.selectedSquare.r === r && this.selectedSquare.c === c) {
+                    this.selectedSquare = null;
+                    this.renderBoard();
+                    return;
+                }
+
+                // 2. Move
+                if (this.selectedSquare) {
+                    const success = this.game.move(this.selectedSquare.r, this.selectedSquare.c, r, c);
+                    if (success) {
+                        this.selectedSquare = null;
+                        this.renderBoard();
+                        return;
+                    }
+                }
+
+                // 3. Select
+                const piece = this.game.getPiece(r, c);
+                if (piece && piece.color === this.game.turn) {
+                    this.selectedSquare = { r, c };
+                    this.renderBoard();
+                }
+            }
+        }
+
+        // Start
+        new ChessUI('board');
+    </script>
+</body>
+</html>
