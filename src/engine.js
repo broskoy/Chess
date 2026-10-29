@@ -102,10 +102,14 @@ export function getPiece(state, r, c) {
     return inBounds(r, c) ? state.board[r][c] : null;
 }
 
+function sameSquare(a, b) {
+    return a !== null && b !== null && a.r === b.r && a.c === b.c;
+}
+
 // --- Move generation ---------------------------------------------------------
 //
 // Moves are plain objects:
-//   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
+//   { type: 'move', from: {r, c}, to: {r, c}, castle?, enPassant?, promotion? }
 //   { type: 'drop', piece, to: {r, c} }            (phase 2)
 
 function pieceMoves(state, r, c) {
@@ -127,7 +131,11 @@ function pieceMoves(state, r, c) {
             if (!piece.hasMoved && isEmpty(r + 2 * dir, c)) add(r + 2 * dir, c);
         }
         for (const dc of [-1, 1]) {
-            if (isEnemy(r + dir, c + dc)) add(r + dir, c + dc);
+            if (isEnemy(r + dir, c + dc)) {
+                add(r + dir, c + dc);
+            } else if (sameSquare(state.enPassant, { r: r + dir, c: c + dc })) {
+                moves.push({ type: 'move', from, to: state.enPassant, enPassant: true });
+            }
         }
         return moves;
     }
@@ -308,13 +316,16 @@ export function applyMove(state, move) {
     const color = state.turn;
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
-    const captured = next.board[to.r][to.c];
+    // En passant takes the pawn beside the capturing pawn, not one on the target square.
+    const capturedAt = move.enPassant ? { r: from.r, c: to.c } : to;
+    const captured = next.board[capturedAt.r][capturedAt.c];
 
     if (captured && captured.type !== 'king') {
         const type = captured.promoted && next.settings.demotePromoted ? 'pawn' : captured.type;
         next.hands[color][type]++;
     }
 
+    next.board[capturedAt.r][capturedAt.c] = null;
     next.board[to.r][to.c] = { ...piece, hasMoved: true };
     next.board[from.r][from.c] = null;
 
@@ -325,7 +336,9 @@ export function applyMove(state, move) {
     }
 
     updateCastlingRights(next, piece, from, to);
-    next.enPassant = null;
+    // Any double step allows en passant, including one by a dropped pawn far from its start rank.
+    const doubleStep = piece.type === 'pawn' && Math.abs(to.r - from.r) === 2;
+    next.enPassant = doubleStep ? { r: (from.r + to.r) / 2, c: from.c } : null;
     next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
