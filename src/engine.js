@@ -105,7 +105,7 @@ export function getPiece(state, r, c) {
 // --- Move generation ---------------------------------------------------------
 //
 // Moves are plain objects:
-//   { type: 'move', from: {r, c}, to: {r, c}, promotion? }
+//   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
 //   { type: 'drop', piece, to: {r, c} }            (phase 2)
 
 function pieceMoves(state, r, c) {
@@ -156,6 +156,38 @@ function pieceMoves(state, r, c) {
             tr += dr;
             tc += dc;
         }
+    }
+
+    if (piece.type === 'king' && r === homeRow(piece.color) && c === 4) {
+        moves.push(...castlingMoves(state, piece.color));
+    }
+    return moves;
+}
+
+function homeRow(color) {
+    return color === WHITE ? 7 : 0;
+}
+
+// The king may not castle out of, through, or into an attacked square.
+// This applies under king capture rules too.
+function castlingMoves(state, color) {
+    const row = homeRow(color);
+    const enemy = opponent(color);
+    if (isSquareAttacked(state, row, 4, enemy)) return [];
+
+    const sides = [
+        // side, rook column, columns that must be empty, columns the king crosses (last = destination)
+        ['kingside', 7, [5, 6], [5, 6]],
+        ['queenside', 0, [1, 2, 3], [3, 2]],
+    ];
+    const moves = [];
+    for (const [side, rookCol, mustBeEmpty, kingPath] of sides) {
+        const rook = state.board[row][rookCol];
+        if (!state.castling[color][side]) continue;
+        if (!rook || rook.type !== 'rook' || rook.color !== color) continue;
+        if (mustBeEmpty.some(col => state.board[row][col] !== null)) continue;
+        if (kingPath.some(col => isSquareAttacked(state, row, col, enemy))) continue;
+        moves.push({ type: 'move', from: { r: row, c: 4 }, to: { r: row, c: kingPath[kingPath.length - 1] }, castle: side });
     }
     return moves;
 }
@@ -285,6 +317,12 @@ export function applyMove(state, move) {
 
     next.board[to.r][to.c] = { ...piece, hasMoved: true };
     next.board[from.r][from.c] = null;
+
+    if (move.castle) {
+        const [rookFrom, rookTo] = move.castle === 'kingside' ? [7, 5] : [0, 3];
+        next.board[from.r][rookTo] = { ...next.board[from.r][rookFrom], hasMoved: true };
+        next.board[from.r][rookFrom] = null;
+    }
 
     updateCastlingRights(next, piece, from, to);
     next.enPassant = null;

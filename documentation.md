@@ -57,7 +57,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [x] Castling rights tracking
 - [x] Game-over message and a restart button
 - [x] King capture rule (setting, on by default)
-- [ ] Castling moves (both sides, all conditions: not through or out of check)
+- [x] Castling moves (both sides; not out of, through or into an attacked square)
 - [ ] En passant (state has an `enPassant` field, not yet set or used)
 - [ ] Pawn promotion (with a choice of piece; set `promoted: true` on the new piece)
 - [ ] Draw rules: threefold repetition, 50-move rule, insufficient material (lower priority)

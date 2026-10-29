@@ -87,3 +87,40 @@ test('with king capture, a stalemate position is not over yet', () => {
     assert.equal(getStatus(state).result, 'playing');
     assert.ok(getLegalMoves(state).length > 0);
 });
+
+const castles = state => getLegalMoves(state).filter(m => m.castle).map(m => m.castle).sort();
+
+test('castling on both sides', () => {
+    const state = fromFEN('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1');
+    assert.deepEqual(castles(state), ['kingside', 'queenside']);
+
+    const kingside = getLegalMoves(state).find(m => m.castle === 'kingside');
+    const next = applyMove(state, kingside);
+    assert.equal(next.board[7][6].type, 'king');
+    assert.equal(next.board[7][5].type, 'rook');
+    assert.equal(next.board[7][7], null);
+    assert.deepEqual(next.castling.white, { kingside: false, queenside: false });
+});
+
+test('no castling out of, through, or into an attacked square', () => {
+    // Out of check: the e4 rook attacks e1.
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/4r3/8/8/R3K2R w KQ - 0 1')), []);
+    // Through: the f4 rook attacks f1, so only queenside remains.
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/5r2/8/8/R3K2R w KQ - 0 1')), ['queenside']);
+    // Into: the g4 rook attacks g1. Same for king capture rules and standard rules.
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/6r1/8/8/R3K2R w KQ - 0 1')), ['queenside']);
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/6r1/8/8/R3K2R w KQ - 0 1', STANDARD)), ['queenside']);
+    // b1 may be attacked: the king never crosses it.
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/1r6/8/8/R3K2R w KQ - 0 1')), ['kingside', 'queenside']);
+});
+
+test('no castling when blocked or without the right', () => {
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/8/8/8/RN2K1NR w KQ - 0 1')), []);
+    // A rook on h1 without the castling right (e.g. one that was dropped there) cannot castle.
+    assert.deepEqual(castles(fromFEN('4k3/8/8/8/8/8/8/R3K2R w Q - 0 1')), ['queenside']);
+});
+
+test('perft depth 1 with castling ("Kiwipete" position)', () => {
+    const state = fromFEN('r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1', STANDARD);
+    assert.equal(perft(state, 1), 48);
+});
