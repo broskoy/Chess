@@ -79,7 +79,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [ ] Run the search in a Web Worker so the page doesn't freeze while the bot thinks
 
 ### Phase 4 — Release and polish
-- [ ] Publish on GitHub Pages (static files, no server)
+- [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
 - Undo, move notation for drops (e.g. `N@e4`), sounds, piece images instead of Unicode
 
 ### Board orientation
