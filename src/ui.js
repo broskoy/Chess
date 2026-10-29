@@ -1,4 +1,6 @@
-import { WHITE, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent } from './engine.js';
+import {
+    WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
+} from './engine.js';
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
@@ -8,15 +10,24 @@ const SYMBOLS = {
 const sameSquare = (a, b) => a !== null && b !== null && a.r === b.r && a.c === b.c;
 
 class ChessUI {
-    constructor(elements) {
+    constructor(elements, settings) {
         this.elements = elements;
+        this.settings = settings;
         this.bottomColor = WHITE;   // which side is drawn at the bottom of the screen
         this.newGame();
     }
 
     newGame() {
         // Every position is kept, which makes undo and move history straightforward later.
-        this.history = [createInitialState()];
+        this.history = [createInitialState(this.settings)];
+        this.clearSelection();
+        this.update();
+    }
+
+    // Rule changes apply to the game in progress, so variants can be compared mid-game.
+    setSettings(settings) {
+        this.settings = settings;
+        this.history[this.history.length - 1] = { ...this.state, settings };
         this.clearSelection();
         this.update();
     }
@@ -194,12 +205,50 @@ class ChessUI {
     }
 }
 
+// Rule settings are remembered in this browser. Storage can be unavailable
+// (private windows, blocked site data), so failures fall back to the defaults.
+const SETTINGS_KEY = 'chess-drops-settings';
+
+function loadSettings() {
+    try {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
+    } catch {
+        return { ...DEFAULT_SETTINGS };
+    }
+}
+
+function saveSettings(settings) {
+    try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+        // Not remembered, but the game still uses the new settings.
+    }
+}
+
+// Form fields are named after the settings: checkboxes hold booleans, selects hold numbers.
+function bindSettingsForm(form, ui) {
+    const fields = [...form.elements].filter(field => field.name);
+    for (const field of fields) {
+        if (field.type === 'checkbox') field.checked = ui.settings[field.name];
+        else field.value = ui.settings[field.name];
+    }
+    form.onchange = () => {
+        const settings = {};
+        for (const field of fields) {
+            settings[field.name] = field.type === 'checkbox' ? field.checked : Number(field.value);
+        }
+        saveSettings(settings);
+        ui.setSettings(settings);
+    };
+}
+
 const ui = new ChessUI({
     board: document.getElementById('board'),
     handTop: document.getElementById('hand-top'),
     handBottom: document.getElementById('hand-bottom'),
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
-});
+}, loadSettings());
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('flip').onclick = () => ui.flip();
+bindSettingsForm(document.getElementById('settings'), ui);

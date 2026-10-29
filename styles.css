@@ -5,7 +5,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
     font-family: sans-serif;
 }
@@ -108,3 +108,18 @@ body {
     text-shadow: 0 0 2px #000;
 }
 .hand-note { color: #aaa; font-size: 13px; }
+
+#rules {
+    width: 490px;
+    margin-top: 12px;
+    color: #ccc;
+    font-size: 14px;
+}
+#rules summary { cursor: pointer; }
+#settings {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+#settings select { margin-left: 6px; }

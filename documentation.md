@@ -71,7 +71,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [x] Cooldown restriction
 - [x] Show in the UI when drops are unavailable (cooldown)
 - [x] Drops count for check/checkmate: a drop that blocks a check is a legal escape, so checkmate detection must consider drops too
-- [ ] Settings panel for the table above
+- [x] Settings panel for the table above ("Rules" under the board; changes apply to the current game and are remembered in the browser)
 
 ### Phase 3 — Bot
 - [ ] Mode choice at the start: **vs bot** (pick your color) or **two players on one screen**

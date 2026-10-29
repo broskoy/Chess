@@ -16,6 +16,29 @@
         <button id="restart">New game</button>
         <button id="flip">Flip board</button>
     </div>
+    <details id="rules">
+        <summary>Rules</summary>
+        <form id="settings">
+            <label>Drop zone
+                <select name="dropZoneDepth">
+                    <option value="0">no drops</option>
+                    <option value="2">2 ranks</option>
+                    <option value="3">3 ranks</option>
+                    <option value="4">4 ranks</option>
+                </select>
+            </label>
+            <label>Board moves required after a drop
+                <select name="dropCooldown">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                </select>
+            </label>
+            <label><input type="checkbox" name="allowDropChecks"> Drops may give check</label>
+            <label><input type="checkbox" name="demotePromoted"> Captured promoted pieces become pawns</label>
+            <label><input type="checkbox" name="kingCapture"> King capture (off: standard checkmate)</label>
+        </form>
+    </details>
 
     <script type="module" src="src/ui.js"></script>
 </body>
