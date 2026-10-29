@@ -59,7 +59,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [x] King capture rule (setting, on by default)
 - [x] Castling moves (both sides; not out of, through or into an attacked square)
 - [x] En passant (also after a dropped pawn's double step)
-- [ ] Pawn promotion (with a choice of piece; set `promoted: true` on the new piece)
+- [x] Pawn promotion (with a choice of piece; the new piece is marked `promoted`)
 - [ ] Draw rules: threefold repetition, 50-move rule, insufficient material (lower priority)
 - [ ] Move history / simple move list (the UI already keeps every position)
 

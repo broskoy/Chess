@@ -8,9 +8,10 @@ const SYMBOLS = {
 const sameSquare = (a, b) => a !== null && b !== null && a.r === b.r && a.c === b.c;
 
 class ChessUI {
-    constructor(boardElement, statusElement) {
+    constructor(boardElement, statusElement, promotionElement) {
         this.boardElement = boardElement;
         this.statusElement = statusElement;
+        this.promotionElement = promotionElement;
         this.bottomColor = WHITE;   // which side is drawn at the bottom of the screen
         this.newGame();
     }
@@ -19,6 +20,7 @@ class ChessUI {
         // Every position is kept, which makes undo and move history straightforward later.
         this.history = [createInitialState()];
         this.selected = null;
+        this.promotionChoices = null;   // promotion moves waiting for the player to pick a piece
         this.update();
     }
 
@@ -41,6 +43,7 @@ class ChessUI {
     play(move) {
         this.history.push(applyMove(this.state, move));
         this.selected = null;
+        this.promotionChoices = null;
         this.update();
     }
 
@@ -52,6 +55,8 @@ class ChessUI {
     handleTileClick(r, c) {
         if (this.status.result !== 'playing') return;
         const square = { r, c };
+        // Clicking the board while choosing a promotion cancels it.
+        this.promotionChoices = null;
 
         if (sameSquare(this.selected, square)) {
             this.selected = null;
@@ -59,9 +64,15 @@ class ChessUI {
             return;
         }
 
-        const move = this.movesFromSelected().find(m => sameSquare(m.to, square));
-        if (move) {
-            this.play(move);
+        const moves = this.movesFromSelected().filter(m => sameSquare(m.to, square));
+        if (moves.length > 1) {
+            // Several moves to one square only happens with promotion: ask which piece.
+            this.promotionChoices = moves;
+            this.render();
+            return;
+        }
+        if (moves.length === 1) {
+            this.play(moves[0]);
             return;
         }
 
@@ -102,11 +113,28 @@ class ChessUI {
         }
 
         this.statusElement.textContent = this.statusText();
+        this.renderPromotionChoices();
+    }
+
+    renderPromotionChoices() {
+        this.promotionElement.innerHTML = '';
+        this.promotionElement.hidden = !this.promotionChoices;
+        if (!this.promotionChoices) return;
+
+        for (const move of this.promotionChoices) {
+            const button = document.createElement('button');
+            button.textContent = SYMBOLS[`${this.state.turn}-${move.promotion}`];
+            button.title = move.promotion;
+            button.className = `${this.state.turn}-piece`;
+            button.onclick = () => this.play(move);
+            this.promotionElement.appendChild(button);
+        }
     }
 
     statusText() {
         const { result, winner, inCheck } = this.status;
         const capitalize = s => s[0].toUpperCase() + s.slice(1);
+        if (this.promotionChoices) return 'Promote to:';
         if (result === 'king-captured') return `${capitalize(winner)} captured the king and wins.`;
         if (result === 'no-moves') return `${capitalize(opponent(winner))} has no moves. ${capitalize(winner)} wins.`;
         if (result === 'checkmate') return `Checkmate. ${capitalize(winner)} wins.`;
@@ -115,6 +143,10 @@ class ChessUI {
     }
 }
 
-const ui = new ChessUI(document.getElementById('board'), document.getElementById('status'));
+const ui = new ChessUI(
+    document.getElementById('board'),
+    document.getElementById('status'),
+    document.getElementById('promotion'),
+);
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('flip').onclick = () => ui.flip();

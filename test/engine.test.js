@@ -166,3 +166,39 @@ test('perft with en passant (standard test position 3)', () => {
     assert.equal(perft(state, 3), 2812);
     assert.equal(perft(state, 4), 43238);
 });
+
+test('a pawn reaching the last rank promotes, with a choice of piece', () => {
+    const state = fromFEN('4k3/1P6/8/8/8/8/8/4K3 w - - 0 1');
+    const promotions = getLegalMoves(state).filter(m => m.from.r === 1 && m.from.c === 1);
+    assert.deepEqual(promotions.map(m => m.promotion).sort(), ['bishop', 'knight', 'queen', 'rook']);
+
+    const next = applyMove(state, promotions.find(m => m.promotion === 'knight'));
+    assert.deepEqual(next.board[0][1], { type: 'knight', color: 'white', hasMoved: true, promoted: true });
+});
+
+test('a captured promoted piece goes to hand as itself, or as a pawn with demotePromoted', () => {
+    const fen = '4k3/8/8/8/8/8/4K3/1q4R1 w - - 0 1';
+    for (const [settings, expected] of [[{}, 'queen'], [{ demotePromoted: true }, 'pawn']]) {
+        const state = fromFEN(fen, settings);
+        state.board[7][1] = { type: 'queen', color: 'black', hasMoved: true, promoted: true };
+        const next = applyMove(state, findMove(state, [7, 6], [7, 1]));
+        assert.equal(next.hands.white[expected], 1);
+    }
+});
+
+// Standard positions covering castling, en passant and promotion together.
+test('perft on positions with every special move', () => {
+    const kiwipete = fromFEN('r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1', STANDARD);
+    assert.equal(perft(kiwipete, 2), 2039);
+    assert.equal(perft(kiwipete, 3), 97862);
+
+    const position4 = fromFEN('r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1', STANDARD);
+    assert.equal(perft(position4, 1), 6);
+    assert.equal(perft(position4, 2), 264);
+    assert.equal(perft(position4, 3), 9467);
+
+    const position5 = fromFEN('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8', STANDARD);
+    assert.equal(perft(position5, 1), 44);
+    assert.equal(perft(position5, 2), 1486);
+    assert.equal(perft(position5, 3), 62379);
+});

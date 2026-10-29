@@ -23,7 +23,8 @@ const VECTORS = {
 const ALL_DIRECTIONS = [...VECTORS.ortho, ...VECTORS.diag];
 
 const BACK_RANK = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
-const FEN_TYPES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+export const PROMOTION_TYPES = ['queen', 'rook', 'bishop', 'knight'];
+const FEN_TYPES ={ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 export function opponent(color) {
     return color === WHITE ? BLACK : WHITE;
@@ -125,14 +126,23 @@ function pieceMoves(state, r, c) {
 
     if (piece.type === 'pawn') {
         const dir = piece.color === WHITE ? -1 : 1;
+        const lastRow = homeRow(opponent(piece.color));
+        // A pawn reaching the last rank has one move per promotion choice.
+        const addPawn = (tr, tc) => {
+            if (tr !== lastRow) return add(tr, tc);
+            for (const promotion of PROMOTION_TYPES) {
+                moves.push({ type: 'move', from, to: { r: tr, c: tc }, promotion });
+            }
+        };
+
         if (isEmpty(r + dir, c)) {
-            add(r + dir, c);
+            addPawn(r + dir, c);
             // Double step depends on the piece, not its rank, so dropped pawns get it too.
-            if (!piece.hasMoved && isEmpty(r + 2 * dir, c)) add(r + 2 * dir, c);
+            if (!piece.hasMoved && isEmpty(r + 2 * dir, c)) addPawn(r + 2 * dir, c);
         }
         for (const dc of [-1, 1]) {
             if (isEnemy(r + dir, c + dc)) {
-                add(r + dir, c + dc);
+                addPawn(r + dir, c + dc);
             } else if (sameSquare(state.enPassant, { r: r + dir, c: c + dc })) {
                 moves.push({ type: 'move', from, to: state.enPassant, enPassant: true });
             }
@@ -326,7 +336,9 @@ export function applyMove(state, move) {
     }
 
     next.board[capturedAt.r][capturedAt.c] = null;
-    next.board[to.r][to.c] = { ...piece, hasMoved: true };
+    next.board[to.r][to.c] = move.promotion
+        ? makePiece(move.promotion, piece.color, { hasMoved: true, promoted: true })
+        : { ...piece, hasMoved: true };
     next.board[from.r][from.c] = null;
 
     if (move.castle) {
