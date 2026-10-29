@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState, fromFEN, getLegalMoves, getStatus, applyMove } from '../src/engine.js';
 
+// Standard chess rules, where moves into check are illegal.
+const STANDARD = { kingCapture: false };
+
 // Counts leaf positions at a given depth; the standard way to validate move generation.
 function perft(state, depth) {
     if (depth === 0) return 1;
@@ -13,7 +16,7 @@ function perft(state, depth) {
 // Castling, en passant and promotion can't happen in the first 4 plies,
 // so these known values already hold without them.
 test('perft from the starting position', () => {
-    const start = createInitialState();
+    const start = createInitialState(STANDARD);
     assert.equal(perft(start, 1), 20);
     assert.equal(perft(start, 2), 400);
     assert.equal(perft(start, 3), 8902);
@@ -21,18 +24,18 @@ test('perft from the starting position', () => {
 });
 
 test("fool's mate is checkmate", () => {
-    const state = fromFEN('rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3');
+    const state = fromFEN('rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3', STANDARD);
     assert.deepEqual(getStatus(state), { result: 'checkmate', winner: 'black', inCheck: true });
 });
 
 test('stalemate is detected', () => {
-    const state = fromFEN('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1');
+    const state = fromFEN('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1', STANDARD);
     assert.deepEqual(getStatus(state), { result: 'stalemate', winner: null, inCheck: false });
 });
 
 test('pinned pieces cannot move off the pin', () => {
     // The e2 bishop is pinned to the white king by the e8 rook.
-    const state = fromFEN('4r2k/8/8/8/8/8/4B3/4K3 w - - 0 1');
+    const state = fromFEN('4r2k/8/8/8/8/8/4B3/4K3 w - - 0 1', STANDARD);
     const bishopMoves = getLegalMoves(state).filter(m => m.from.r === 6 && m.from.c === 4);
     assert.equal(bishopMoves.length, 0);
 });
@@ -60,4 +63,27 @@ test('moving a rook removes that castling right', () => {
     const next = applyMove(state, rookMove);
     assert.deepEqual(next.castling.white, { kingside: false, queenside: true });
     assert.deepEqual(next.castling.black, { kingside: true, queenside: true });
+});
+
+test('with king capture, moving into check is allowed', () => {
+    // Same pin as above: the bishop may now leave e2.
+    const state = fromFEN('4r2k/8/8/8/8/8/4B3/4K3 w - - 0 1');
+    const bishopMoves = getLegalMoves(state).filter(m => m.from.r === 6 && m.from.c === 4);
+    assert.ok(bishopMoves.length > 0);
+});
+
+test('capturing the king wins the game', () => {
+    // Black has left the king attacked on the e-file.
+    const exposed = fromFEN('4k3/8/8/8/8/8/8/4R1K1 w - - 0 1');
+    const capture = getLegalMoves(exposed).find(m => m.to.r === 0 && m.to.c === 4);
+    const next = applyMove(exposed, capture);
+    assert.deepEqual(getStatus(next), { result: 'king-captured', winner: 'white', inCheck: false });
+    assert.equal(getLegalMoves(next).length, 0);
+    assert.equal(next.hands.white.king, undefined);
+});
+
+test('with king capture, a stalemate position is not over yet', () => {
+    const state = fromFEN('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1');
+    assert.equal(getStatus(state).result, 'playing');
+    assert.ok(getLegalMoves(state).length > 0);
 });

@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
     dropCooldown: 1,         // board moves required after a drop before dropping again
     allowDropChecks: true,
     demotePromoted: false,   // captured promoted pieces go to hand as pawns
+    kingCapture: true,       // the king can be captured to win; moves into check are allowed
 };
 
 const VECTORS = {
@@ -173,6 +174,10 @@ function pseudoLegalMoves(state) {
 
 export function getLegalMoves(state) {
     const color = state.turn;
+    if (state.settings.kingCapture) {
+        // Moves into check are allowed, but nothing moves once a king has been taken.
+        return isKingCaptured(state) ? [] : pseudoLegalMoves(state);
+    }
     return pseudoLegalMoves(state).filter(move => !isInCheck(applyMove(state, move), color));
 }
 
@@ -226,9 +231,24 @@ export function isInCheck(state, color) {
     return king !== null && isSquareAttacked(state, king.r, king.c, opponent(color));
 }
 
-// Returns { result: 'playing' | 'checkmate' | 'stalemate', winner, inCheck }.
+function isKingCaptured(state) {
+    return findKing(state, WHITE) === null || findKing(state, BLACK) === null;
+}
+
+// Returns { result, winner, inCheck } where result is one of
+// 'playing', 'king-captured', 'no-moves' (king capture rules),
+// 'checkmate', 'stalemate' (standard rules).
 export function getStatus(state, legalMoves = getLegalMoves(state)) {
     const inCheck = isInCheck(state, state.turn);
+
+    if (state.settings.kingCapture) {
+        if (findKing(state, WHITE) === null) return { result: 'king-captured', winner: BLACK, inCheck };
+        if (findKing(state, BLACK) === null) return { result: 'king-captured', winner: WHITE, inCheck };
+        // Being unable to move at all counts as a loss, like a stalemate does under these rules.
+        if (legalMoves.length === 0) return { result: 'no-moves', winner: opponent(state.turn), inCheck };
+        return { result: 'playing', winner: null, inCheck };
+    }
+
     if (legalMoves.length > 0) return { result: 'playing', winner: null, inCheck };
     return inCheck
         ? { result: 'checkmate', winner: opponent(state.turn), inCheck }
@@ -258,7 +278,7 @@ export function applyMove(state, move) {
     const piece = next.board[from.r][from.c];
     const captured = next.board[to.r][to.c];
 
-    if (captured) {
+    if (captured && captured.type !== 'king') {
         const type = captured.promoted && next.settings.demotePromoted ? 'pawn' : captured.type;
         next.hands[color][type]++;
     }

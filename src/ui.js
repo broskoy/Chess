@@ -107,6 +107,8 @@ class ChessUI {
     statusText() {
         const { result, winner, inCheck } = this.status;
         const capitalize = s => s[0].toUpperCase() + s.slice(1);
+        if (result === 'king-captured') return `${capitalize(winner)} captured the king and wins.`;
+        if (result === 'no-moves') return `${capitalize(opponent(winner))} has no moves. ${capitalize(winner)} wins.`;
         if (result === 'checkmate') return `Checkmate. ${capitalize(winner)} wins.`;
         if (result === 'stalemate') return 'Stalemate. Draw.';
         return `${capitalize(this.state.turn)} to move${inCheck ? ' (check)' : ''}.`;
