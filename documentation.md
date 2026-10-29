@@ -65,11 +65,11 @@ A web chess variant where captured pieces can be brought back onto the board (li
 
 ### Phase 2 — Drops
 - [x] Captured pieces go to the capturer's hand (color switched)
-- [ ] Hand display for each player, with counts per piece type
-- [ ] Select a piece from the hand → highlight legal drop squares → click to drop
+- [x] Hand display for each player, with counts per piece type
+- [x] Select a piece from the hand → highlight legal drop squares → click to drop
 - [x] Drop zone restriction
 - [x] Cooldown restriction
-- [ ] Show in the UI when drops are unavailable (cooldown)
+- [x] Show in the UI when drops are unavailable (cooldown)
 - [x] Drops count for check/checkmate: a drop that blocks a check is a legal escape, so checkmate detection must consider drops too
 - [ ] Settings panel for the table above
 
