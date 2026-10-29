@@ -27,6 +27,13 @@ A web chess variant where captured pieces can be brought back onto the board (li
 ### Castling
 - A **dropped rook can never castle**. Castling is tracked as rights in the game state (lost when the king moves or a rook's corner is moved from or captured on), not through the rook's `hasMoved`, so a rook dropped on a1/h1 doesn't count.
 
+### King capture
+- The king can be captured, and **capturing it wins the game**. Moves that leave your king attacked are allowed, so mistakes are punished rather than prevented.
+- Checkmate still works in practice: every move loses the king next turn. Stalemate becomes a loss, since you have to move into capture.
+- Castling still can't start from, pass through or land on an attacked square.
+- The king is highlighted when attacked, so players notice the danger.
+- This is a setting (`kingCapture`, on by default) so it can be compared with standard check rules during play-testing.
+
 ### Open questions (decide through play-testing)
 - **Drop checks / drop mates**: allowed for now. The drop zone and cooldown may be enough to tame them.
 - **Promoted pawns**: when captured, does the piece go into hand as its promoted type (e.g. queen) or **revert to a pawn**? For now it keeps its promoted type. Make it a setting.
@@ -39,6 +46,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 | Drop cooldown | 1 turn | 0, 1, 2 |
 | Drop checks allowed | yes | yes / no |
 | Captured promoted pieces revert to pawn | no | yes / no |
+| King capture (instead of checkmate) | yes | yes / no |
 
 ## Scope
 
@@ -63,9 +71,24 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [ ] Drops count for check/checkmate: a drop that blocks a check is a legal escape, so checkmate detection must consider drops too
 - [ ] Settings panel for the table above
 
-### Phase 3 — Polish (later)
-- Undo, move notation for drops (e.g. `N@e4`), board flip, sounds, piece images instead of Unicode
-- Online play (needs a server or peer-to-peer). Out of scope until local play feels right.
+### Phase 3 — Bot
+- [ ] Mode choice at the start: **vs bot** (pick your color) or **two players on one screen**
+- [ ] Bot: alpha-beta search a few moves deep with a material-based evaluation, running in the browser
+- [ ] Improve evaluation over time: king safety, piece activity, value of pieces in hand
+- [ ] Run the search in a Web Worker so the page doesn't freeze while the bot thinks
+
+### Phase 4 — Release and polish
+- [ ] Publish on GitHub Pages (static files, no server)
+- Undo, move notation for drops (e.g. `N@e4`), sounds, piece images instead of Unicode
+
+### Board orientation
+- [x] Flip board button
+- No auto-flip each turn: tried it, and a board that spins every move felt disorienting even for two players.
+- When playing the bot as black, black is at the bottom.
+
+### Not planned
+- **Online multiplayer.** There's no server, and the bot covers playing alone. If it's ever wanted: peer-to-peer (WebRTC/PeerJS, game by shared link) or a free hosted backend.
+- If a much stronger bot is ever needed, Fairy-Stockfish supports custom drop variants in the browser (unclear whether it can express the cooldown rule).
 
 ### Future ideas
 - Piece **abilities** (special powers). Parked for now; standard chess + drops comes first.
@@ -90,5 +113,5 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - `fromFEN` loads standard FEN positions, mainly for tests.
 
 ### Running
-- Game: `npm run serve`, then open http://localhost:8000. ES modules don't load from `file://`, so opening index.html directly won't work.
+- Game: `npm run serve`, then open http://localhost:8000. ES modules don't load from `file://`, so opening index.html directly won't work. The server ([serve.py](serve.py)) disables browser caching so edits show up on a normal reload.
 - Tests: `npm test`.

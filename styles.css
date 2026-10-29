@@ -48,11 +48,18 @@ body {
 
 #status { color: #ccc; margin: 12px 0 8px; }
 
-#restart {
+#controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ccc;
+}
+
+#controls button {
     background: #444;
     color: white;
     border: none;
     padding: 6px 14px;
     cursor: pointer;
 }
-#restart:hover { background: #555; }
+#controls button:hover { background: #555; }

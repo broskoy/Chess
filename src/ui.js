@@ -1,4 +1,4 @@
-import { createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing } from './engine.js';
+import { WHITE, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent } from './engine.js';
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
@@ -11,6 +11,7 @@ class ChessUI {
     constructor(boardElement, statusElement) {
         this.boardElement = boardElement;
         this.statusElement = statusElement;
+        this.bottomColor = WHITE;   // which side is drawn at the bottom of the screen
         this.newGame();
     }
 
@@ -19,6 +20,11 @@ class ChessUI {
         this.history = [createInitialState()];
         this.selected = null;
         this.update();
+    }
+
+    flip() {
+        this.bottomColor = opponent(this.bottomColor);
+        this.render();
     }
 
     get state() {
@@ -71,8 +77,12 @@ class ChessUI {
         const targets = this.movesFromSelected().map(m => m.to);
         const checkedKing = this.status.inCheck ? findKing(this.state, this.state.turn) : null;
 
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
+        // With black at the bottom the board is rotated 180°, so both rows and columns reverse.
+        const flipped = this.bottomColor !== WHITE;
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const r = flipped ? 7 - row : row;
+                const c = flipped ? 7 - col : col;
                 const tile = document.createElement('div');
                 const square = { r, c };
                 tile.className = `tile ${(r + c) % 2 === 1 ? 'dark-tile' : 'light-tile'}`;
@@ -105,3 +115,4 @@ class ChessUI {
 
 const ui = new ChessUI(document.getElementById('board'), document.getElementById('status'));
 document.getElementById('restart').onclick = () => ui.newGame();
+document.getElementById('flip').onclick = () => ui.flip();
