@@ -8,7 +8,7 @@ export const WHITE = 'white';
 export const BLACK = 'black';
 
 export const DEFAULT_SETTINGS = {
-    dropZoneDepth: 4,        // ranks from your own side where drops are allowed
+    dropZoneDepth: 4,        // ranks from your own side where drops are allowed (0 = no drops)
     dropCooldown: 1,         // board moves required after a drop before dropping again
     allowDropChecks: true,
     demotePromoted: false,   // captured promoted pieces go to hand as pawns
@@ -111,7 +111,7 @@ function sameSquare(a, b) {
 //
 // Moves are plain objects:
 //   { type: 'move', from: {r, c}, to: {r, c}, castle?, enPassant?, promotion? }
-//   { type: 'drop', piece, to: {r, c} }            (phase 2)
+//   { type: 'drop', piece, to: {r, c} }            piece is a type name, e.g. 'knight'
 
 function pieceMoves(state, r, c) {
     const piece = state.board[r][c];
@@ -210,6 +210,31 @@ function castlingMoves(state, color) {
     return moves;
 }
 
+// Drops from the hand onto empty squares in the drop zone, unless on cooldown.
+function dropMoves(state) {
+    const color = state.turn;
+    if (state.dropCooldown[color] > 0) return [];
+
+    // Drop zone rows, counted from this side's back rank.
+    const zoneRows = Array.from({ length: state.settings.dropZoneDepth }, (_, i) => color === WHITE ? 7 - i : i);
+    const moves = [];
+    for (const [type, count] of Object.entries(state.hands[color])) {
+        if (count === 0) continue;
+        for (const r of zoneRows) {
+            // A pawn on either back rank could never move (or would skip promotion).
+            if (type === 'pawn' && (r === 0 || r === 7)) continue;
+            for (let c = 0; c < 8; c++) {
+                if (state.board[r][c] === null) moves.push({ type: 'drop', piece: type, to: { r, c } });
+            }
+        }
+    }
+
+    if (!state.settings.allowDropChecks) {
+        return moves.filter(move => !isInCheck(applyMove(state, move), opponent(color)));
+    }
+    return moves;
+}
+
 // All moves for the side to move, ignoring whether they leave the king in check.
 function pseudoLegalMoves(state) {
     const moves = [];
@@ -219,6 +244,7 @@ function pseudoLegalMoves(state) {
             if (piece && piece.color === state.turn) moves.push(...pieceMoves(state, r, c));
         }
     }
+    moves.push(...dropMoves(state));
     return moves;
 }
 
@@ -324,6 +350,8 @@ function cloneState(state) {
 export function applyMove(state, move) {
     const next = cloneState(state);
     const color = state.turn;
+    if (move.type === 'drop') return applyDrop(next, move, color);
+
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
     // En passant takes the pawn beside the capturing pawn, not one on the target square.
@@ -352,6 +380,20 @@ export function applyMove(state, move) {
     const doubleStep = piece.type === 'pawn' && Math.abs(to.r - from.r) === 2;
     next.enPassant = doubleStep ? { r: (from.r + to.r) / 2, c: from.c } : null;
     next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
+    next.dropCooldown[color] = Math.max(0, next.dropCooldown[color] - 1);
+    if (color === BLACK) next.fullmoveNumber++;
+    next.turn = opponent(color);
+    return next;
+}
+
+// `next` is already a copy of the state, so it can be changed in place.
+function applyDrop(next, move, color) {
+    // Dropped pieces count as unmoved, so a dropped pawn can double step.
+    next.board[move.to.r][move.to.c] = makePiece(move.piece, color);
+    next.hands[color][move.piece]--;
+    next.dropCooldown[color] = next.settings.dropCooldown;
+    next.enPassant = null;
+    next.halfmoveClock++;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;

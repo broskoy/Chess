@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createInitialState, fromFEN, getLegalMoves, getStatus, applyMove } from '../src/engine.js';
 
-// Standard chess rules, where moves into check are illegal.
-const STANDARD = { kingCapture: false };
+// Standard chess: no drops, and moves into check are illegal.
+const STANDARD = { kingCapture: false, dropZoneDepth: 0 };
+const STANDARD_WITH_DROPS = { kingCapture: false };
 
 // Counts leaf positions at a given depth; the standard way to validate move generation.
 function perft(state, depth) {
@@ -201,4 +202,93 @@ test('perft on positions with every special move', () => {
     assert.equal(perft(position5, 1), 44);
     assert.equal(perft(position5, 2), 1486);
     assert.equal(perft(position5, 3), 62379);
+});
+
+const drops = state => getLegalMoves(state).filter(m => m.type === 'drop');
+const dropRows = state => [...new Set(drops(state).map(m => m.to.r))].sort();
+
+test('drops go on empty squares in your own 4 ranks', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    state.hands.white.knight = 1;
+    assert.deepEqual(dropRows(state), [4, 5, 6, 7]);
+    assert.equal(drops(state).length, 31, '32 zone squares minus the king on e1');
+
+    const black = fromFEN('4k3/8/8/8/8/8/8/4K3 b - - 0 1');
+    black.hands.black.knight = 1;
+    assert.deepEqual(dropRows(black), [0, 1, 2, 3]);
+});
+
+test('the drop zone depth is a setting', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { dropZoneDepth: 2 });
+    state.hands.white.rook = 1;
+    assert.deepEqual(dropRows(state), [6, 7]);
+});
+
+test('pawns cannot be dropped on the back rank', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    state.hands.white.pawn = 1;
+    assert.deepEqual(dropRows(state), [4, 5, 6]);
+});
+
+test('dropping places the piece and takes it from the hand', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    state.hands.white.bishop = 2;
+    const next = applyMove(state, drops(state).find(m => m.to.r === 5 && m.to.c === 2));
+    assert.deepEqual(next.board[5][2], { type: 'bishop', color: 'white', hasMoved: false, promoted: false });
+    assert.equal(next.hands.white.bishop, 1);
+    assert.equal(next.turn, 'black');
+});
+
+test('after a drop, the next move must be a board move', () => {
+    let state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    state.hands.white.knight = 2;
+    state = applyMove(state, drops(state)[0]);
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));  // black king moves
+    assert.equal(drops(state).length, 0, 'white is on cooldown');
+
+    state = applyMove(state, findMove(state, [7, 4], [7, 5]));  // white board move
+    state = applyMove(state, findMove(state, [0, 3], [0, 4]));
+    assert.ok(drops(state).length > 0, 'cooldown is over');
+});
+
+test('with no cooldown, drops can follow each other', () => {
+    let state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { dropCooldown: 0 });
+    state.hands.white.knight = 2;
+    state = applyMove(state, drops(state)[0]);
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    assert.ok(drops(state).length > 0);
+});
+
+test('a dropped pawn can double step', () => {
+    let state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    state.hands.white.pawn = 1;
+    state = applyMove(state, drops(state).find(m => m.to.r === 4 && m.to.c === 0));  // a4
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    assert.ok(findMove(state, [4, 0], [2, 0]), 'a4-a6');
+});
+
+test('drops that give check can be turned off', () => {
+    // A rook dropped on the e-file would attack the black king on e8.
+    const state = fromFEN('4k3/8/8/8/8/8/8/K7 w - - 0 1', { allowDropChecks: false });
+    state.hands.white.rook = 1;
+    assert.ok(drops(state).every(m => m.to.c !== 4));
+    assert.ok(drops(state).length > 0);
+});
+
+test('under standard rules, a drop can block check', () => {
+    // The black rook on a1 checks the white king on h1 along the first rank.
+    const state = fromFEN('k7/8/8/8/8/8/8/r6K w - - 0 1', STANDARD_WITH_DROPS);
+    state.hands.white.knight = 1;
+    const blocks = drops(state).map(m => m.to.r * 8 + m.to.c).sort((a, b) => a - b);
+    // Only drops on b1-g1 stop the check.
+    assert.deepEqual(blocks, [57, 58, 59, 60, 61, 62]);
+    assert.equal(getStatus(state).result, 'playing');
+});
+
+test('under standard rules, checkmate counts drops as escapes', () => {
+    // Back-rank mate except that white holds a piece that can block.
+    const state = fromFEN('k7/8/8/8/8/8/6PP/r6K w - - 0 1', STANDARD_WITH_DROPS);
+    assert.equal(getStatus(state).result, 'checkmate');
+    state.hands.white.bishop = 1;
+    assert.equal(getStatus(state).result, 'playing');
 });
