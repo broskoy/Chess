@@ -33,6 +33,8 @@ body {
 .white-piece { color: #fff; text-shadow: 0 0 2px #000; }
 .black-piece { color: #000; }
 
+/* Tints the square's own color, so light and dark squares stay distinguishable */
+.last-move { background-image: linear-gradient(rgba(246, 246, 105, 0.45), rgba(246, 246, 105, 0.45)); }
 .selected { background-color: rgba(255, 255, 0, 0.5) !important; }
 .in-check { background-color: #e05a4f !important; }
 

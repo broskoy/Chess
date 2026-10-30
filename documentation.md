@@ -127,6 +127,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
 - [x] Resurrect sound
+- [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
 - Later: piece images instead of Unicode, ruler artwork
 
 ### Not planned

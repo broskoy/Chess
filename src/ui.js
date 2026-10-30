@@ -25,6 +25,7 @@ class ChessUI {
     newGame() {
         // Every position is kept, which makes undo and move history straightforward later.
         this.history = [createInitialState(this.settings)];
+        this.moves = [];   // moves[i] leads from history[i] to history[i + 1]
         this.clearSelection();
         this.update();
     }
@@ -56,6 +57,7 @@ class ChessUI {
     play(move) {
         const isCapture = move.type === 'move' && getPiece(this.state, move.to.r, move.to.c) !== null;
         this.history.push(applyMove(this.state, move));
+        this.moves.push(move);
         this.clearSelection();
         this.update();
         this.playSound(move.type === 'resurrect' ? 'resurrect' : isCapture ? 'capture' : 'move');
@@ -72,6 +74,7 @@ class ChessUI {
     undo() {
         if (this.history.length === 1) return;
         this.history.pop();
+        this.moves.pop();
         // Keep the current rules even if they changed after this position was played.
         this.history[this.history.length - 1] = { ...this.state, settings: this.settings };
         this.clearSelection();
@@ -147,6 +150,9 @@ class ChessUI {
         const checkedKing = this.status.inCheck ? findKing(this.state, this.state.turn) : null;
         const { grave } = this.state;
         const canRaise = this.resurrectMove() !== null && this.status.result === 'playing';
+        const lastMove = this.moves[this.moves.length - 1] ?? null;
+        // A resurrection has no starting square, only where the piece rose.
+        const lastSquares = lastMove ? [lastMove.from ?? null, lastMove.to] : [];
 
         // With black at the bottom the board is rotated 180°, so both rows and columns reverse.
         const flipped = this.bottomColor !== WHITE;
@@ -163,6 +169,7 @@ class ChessUI {
                     tile.textContent = SYMBOLS[`${piece.color}-${piece.type}`];
                     tile.classList.add(`${piece.color}-piece`);
                 }
+                if (lastSquares.some(s => sameSquare(s, square))) tile.classList.add('last-move');
                 if (sameSquare(this.selected, square)) tile.classList.add('selected');
                 if (sameSquare(checkedKing, square)) tile.classList.add('in-check');
                 if (targets.some(t => sameSquare(t, square))) tile.classList.add('highlight');
