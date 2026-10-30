@@ -1,107 +1,119 @@
-# Chess with Drops — Plan
+# Chess with Rulers — Plan
 
-A web chess variant where captured pieces can be brought back onto the board (like shogi), with restrictions that keep it from turning into an all-out attacking game.
+A single-player chess game against a bot, where each side's king is a **ruler** with a special ability. The first two rulers are the **Necromancer**, who raises the most recent dead piece, and the **Alchemist**, who converts pieces using a budget.
 
-## Core idea
+(The name is a placeholder.)
 
-- When you capture an enemy piece, it goes into **your hand** and switches to your color.
-- On your turn you either **make a normal move** or **drop** a piece from your hand onto the board.
-- Drops are limited by a **drop zone** and a **cooldown** (see below).
+## Direction
 
-## Variant rules
+- **Rulers replace the king.** A ruler moves and is captured like a king, and capturing it wins. Each ruler adds one ability, used instead of a normal move.
+- **Bot only.** You play against the bot, eventually over **multiple rounds** with different rulers and armies.
+- **Fun over fairness.** Rulers don't need to be balanced against each other. Since it's single-player, what matters is that each round feels beatable but tense, which is tuned with the bot's strength, its ruler and its army.
+- **Asymmetric playstyles.** The Necromancer generates value over time, so it plays defensively to grow its army. The Alchemist can start with a larger budget and rush.
 
-### Drop zone
-- You can only drop on **empty squares in your own 4 ranks** (white: ranks 1–4, black: ranks 5–8).
-- Pawns can't be dropped on your own back rank (they could never move).
-- Pawns can't be dropped on the last rank (normally impossible anyway with a 4-rank zone).
+### Why not drops anymore
+The first version let you drop captured pieces back onto the board (like shogi / Crazyhouse). Play-testing showed this reduces tactics and rewards aggression too much: every capture counts twice, so games turn into attacking races. The ruler abilities are deliberately local and limited instead. The drop code lives in the git history (commits "Add drops to the engine" through "Add a rules panel") if it's ever needed again.
 
-### Cooldown
-- After a drop, your **next turn must be a normal board move**. You can't drop on two turns in a row.
-- This stops the drop → check → drop → check chains that dominate Crazyhouse.
+## Rulers
 
-### Pawn double step
-- A pawn's double step depends on a per-piece **`hasMoved` flag**, not on its rank.
-- A dropped pawn starts with `hasMoved = false`, so its first move can be a double step from wherever it was dropped.
-- En passant applies to any double step, including one by a dropped pawn.
+### Necromancer
+- There is **one grave** on the board: the square where the **most recent piece died**, from either side.
+- The grave holds that piece. A new death anywhere replaces the grave.
+- **Resurrect:** the Necromancer spends their turn to raise the piece in the grave, on the grave's square. It comes back **in the Necromancer's color**, whichever side it died for.
+- The grave square must be **empty**. Right after a capture, the capturing piece stands on the grave and blocks it. The grave opens only once that piece moves away. This keeps the ability tame for now.
+- Range: anywhere on the board (the grave's location is the only constraint).
+- **Tactics this creates:**
+  - The capturer can stay on the grave to block it, or step off and allow a resurrection.
+  - The grave is usually on a contested square, so a raised piece may be captured again straight away. Keeping a threat on the grave is a defence.
+  - With two Necromancers, they share the one grave. Whoever moves first after it opens gets it, so stepping off a grave hands the opponent the first chance.
+- Possible nerfs after play-testing: only raise your own pieces, or only the opponent's.
 
-### Castling
-- A **dropped rook can never castle**. Castling is tracked as rights in the game state (lost when the king moves or a rook's corner is moved from or captured on), not through the rook's `hasMoved`, so a rook dropped on a1/h1 doesn't count.
+### Alchemist (planned, rules still open)
+- Converts one of their pieces into another type, spending the turn.
+- Has a **budget** of points, using standard piece values (pawn 1, knight 3, bishop 3, rook 5, queen 9).
+  - **Downgrading** a piece earns the difference (rook → knight: +2).
+  - **Upgrading** a piece costs the difference (pawn → bishop: −2).
+- Starts with **0 points** on a full board, so the first conversion must be a downgrade (a stuck rook becoming an active knight, for example). The starting budget is the main tuning lever.
+- Likely limits: the king/ruler can't be converted. Pawns can't be created on the first or last rank.
+- The same point values can define **army budgets**, allowing different starting setups per round.
+
+## Base rules
+
+These carry over from standard chess, with a few deliberate changes.
 
 ### King capture
-- The king can be captured, and **capturing it wins the game**. Moves that leave your king attacked are allowed, so mistakes are punished rather than prevented.
-- Checkmate still works in practice: every move loses the king next turn. Stalemate becomes a loss, since you have to move into capture.
+- The ruler can be captured, and **capturing it wins the game**. Moves that leave your ruler attacked are allowed, so mistakes are punished rather than prevented.
+- Checkmate still works in practice: every move loses the ruler next turn. Stalemate becomes a loss, since you have to move into capture.
 - Castling still can't start from, pass through or land on an attacked square.
-- The king is highlighted when attacked, so players notice the danger.
-- This is a setting (`kingCapture`, on by default) so it can be compared with standard check rules during play-testing.
+- The ruler is highlighted when attacked, and a sound plays.
+- Setting `kingCapture` (on by default) switches back to standard check rules.
 
-### Open questions (decide through play-testing)
-- **Drop checks / drop mates**: allowed for now. The drop zone and cooldown may be enough to tame them.
-- **Promoted pawns**: when captured, does the piece go into hand as its promoted type (e.g. queen) or **revert to a pawn**? For now it keeps its promoted type. Make it a setting.
+### Pawn double step
+- A pawn's double step depends on a per-piece **`hasMoved` flag**, not on its rank. This matters for pieces that come back (resurrected) or change type (converted).
+- En passant applies to any double step.
 
-## Configurable settings (for play-testing)
+### Castling
+- Tracked as rights in the game state (lost when the king moves or a rook's corner is moved from or captured on), not through the rook's `hasMoved`. A rook that is resurrected or created on a1/h1 can't castle.
 
-| Setting | Default | Options |
-|---|---|---|
-| Drop zone depth | 4 ranks | 2, 3, 4 |
-| Drop cooldown | 1 turn | 0, 1, 2 |
-| Drop checks allowed | yes | yes / no |
-| Captured promoted pieces revert to pawn | no | yes / no |
-| King capture (instead of checkmate) | yes | yes / no |
+## Open questions (decide through play-testing)
+
+- **Necromancer:**
+  - Does a resurrected pawn get its double step again (`hasMoved = false`)?
+  - Does a promoted piece come back as its promoted type, or as a pawn?
+  - En passant is the one capture where the capturer doesn't land on the grave, so that grave starts open. Fine as an exception, or should it be blocked too?
+  - Can a resurrection capture or give check? (It can't capture, since the square must be empty; giving check is allowed for now.)
+- **Alchemist:** starting budget; whether budget is also earned per turn or per capture; whether upgrading to a queen is allowed or capped; one conversion per turn.
+- **Rounds:** how many, what changes between them (bot ruler, army budget, bot strength), and what the player keeps between rounds.
 
 ## Scope
 
-### Phase 1 — Complete standard chess
-- [x] Check detection; filter out moves that leave your own king in check
-- [x] Checkmate and stalemate
-- [x] Per-piece `hasMoved` flag
-- [x] Castling rights tracking
-- [x] Game-over message and a restart button
+### Phase 1 — Standard chess (done)
+- [x] Check, checkmate and stalemate (standard rules mode)
 - [x] King capture rule (setting, on by default)
-- [x] Castling moves (both sides; not out of, through or into an attacked square)
-- [x] En passant (also after a dropped pawn's double step)
-- [x] Pawn promotion (with a choice of piece; the new piece is marked `promoted`)
+- [x] Castling, en passant, promotion with a choice of piece
+- [x] Per-piece `hasMoved` flag; castling rights tracking
+- [x] Game-over message, restart, undo
 - [ ] Draw rules: threefold repetition, 50-move rule, insufficient material (lower priority)
-- [ ] Move history / simple move list (the UI already keeps every position)
+- [ ] Move history / simple move list
 
-### Phase 2 — Drops
-- [x] Captured pieces go to the capturer's hand (color switched)
-- [x] Hand display for each player, with counts per piece type
-- [x] Select a piece from the hand → highlight legal drop squares → click to drop
-- [x] Drop zone restriction
-- [x] Cooldown restriction
-- [x] Show in the UI when drops are unavailable (cooldown)
-- [x] Drops count for check/checkmate: a drop that blocks a check is a legal escape, so checkmate detection must consider drops too
-- [x] Settings panel for the table above ("Rules" under the board; changes apply to the current game and are remembered in the browser)
+### Phase 2 — Rulers framework and the Necromancer
+- [ ] Remove drops (engine, hands UI, drop settings)
+- [ ] Each side has a ruler type in the game state (plain king, Necromancer, later Alchemist)
+- [ ] Track the grave: square and dead piece, updated on every capture (including en passant)
+- [ ] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
+- [ ] Show the grave on the board (marker plus the dead piece), and a way to choose "resurrect" in the UI
+- [ ] Choose each side's ruler for testing (two players on one screen until the bot exists)
+- [ ] Tests for grave tracking, blocking, resurrection colors
 
-### Phase 3 — Bot
-- [ ] Mode choice at the start: **vs bot** (pick your color) or **two players on one screen**
-- [ ] Bot: alpha-beta search a few moves deep with a material-based evaluation, running in the browser
-- [ ] Improve evaluation over time: king safety, piece activity, value of pieces in hand
+### Phase 3 — Alchemist
+- [ ] Budget in the game state, conversion moves, UI to pick a piece and its new type
+- [ ] Tests
+
+### Phase 4 — Bot
+- [ ] Alpha-beta search a few moves deep with a material-based evaluation, running in the browser
+- [ ] Understand ruler abilities (they're just extra move types for the search; evaluation may need hints, e.g. the value of an open grave or of unspent budget)
 - [ ] Run the search in a Web Worker so the page doesn't freeze while the bot thinks
+- [ ] Mode choice: vs bot (pick your color and ruler) or two players on one screen (kept for testing)
 
-### Phase 4 — Release and polish
+### Phase 5 — Rounds and armies
+- [ ] Multiple rounds against the bot with different rulers
+- [ ] Army budgets and different starting setups
+
+### Polish (done so far)
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
-- [x] Undo (button and Ctrl+Z)
 - [x] Turn indicator ("stoplight" beside the board; the winner stays lit at game end)
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
-- Move notation for drops (e.g. `N@e4`), piece images instead of Unicode
-
-### Board orientation
-- [x] Flip board button
-- No auto-flip each turn: tried it, and a board that spins every move felt disorienting even for two players.
-- When playing the bot as black, black is at the bottom.
+- [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
+- [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
+- Later: piece images instead of Unicode, ruler artwork, a resurrect sound
 
 ### Not planned
-- **Online multiplayer.** There's no server, and the bot covers playing alone. If it's ever wanted: peer-to-peer (WebRTC/PeerJS, game by shared link) or a free hosted backend.
-- If a much stronger bot is ever needed, Fairy-Stockfish supports custom drop variants in the browser (unclear whether it can express the cooldown rule).
-
-### Future ideas
-- Piece **abilities** (special powers). Parked for now; standard chess + drops comes first.
+- **Online multiplayer.** There's no server, and the game is designed around the bot.
 
 ## Technical approach
 
 - Plain HTML/CSS/JavaScript with ES modules, no build step and no framework for now.
-- **Rules engine written from scratch** (no chess.js) so the variant rules are easy to change.
+- **Rules engine written from scratch** (no chess.js), so new rules and abilities are easy to add.
 
 ### Files
 - [src/engine.js](src/engine.js): rules only, no DOM. Runs in the browser and in Node.
@@ -110,12 +122,13 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design
-- **Game state is one plain object**: board, turn, castling rights, en passant square, hands, drop cooldowns, clocks and settings. Everything the rules depend on lives there.
+- **Game state is one plain object**: board, turn, castling rights, en passant square, rulers, grave, clocks and settings. Everything the rules depend on lives there.
 - **Pure functions**: `applyMove(state, move)` returns a new state and never changes the old one. Pieces are never mutated, so copies can share them cheaply.
-- Move representation covers both kinds of move:
-  - Board move: `{ type: 'move', from, to, promotion? }`
-  - Drop: `{ type: 'drop', piece, to }`
-- Legal move generation: generate pseudo-legal moves (drops included, once added), then drop any that leave your own king in check. Checkmate = in check with no legal moves. Because drops go through the same filter, blocking a check with a drop works automatically.
+- **Abilities are move types**, so the UI, undo and the bot handle them like any other move:
+  - Board move: `{ type: 'move', from, to, castle?, enPassant?, promotion? }`
+  - Resurrect: `{ type: 'resurrect' }` (the grave holds the square and piece)
+  - Convert (Alchemist): `{ type: 'convert', at, to }`
+- Legal move generation: generate all moves including abilities, then (in standard-rules mode) drop any that leave your own king in check.
 - `fromFEN` loads standard FEN positions, mainly for tests.
 
 ### Running
