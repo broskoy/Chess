@@ -95,9 +95,10 @@ body {
 
 #controls button:disabled { opacity: 0.45; cursor: default; }
 
-/* Turn indicator beside the board, positioned so the board itself stays centered */
+/* Side bar beside the board, positioned so the board itself stays centered:
+   material, ruler ability and turn light for each side, mirrored around the middle */
 #board-area { position: relative; }
-#turn-light {
+#side-bar {
     position: absolute;
     left: calc(100% + 16px);
     top: 50%;
@@ -158,3 +159,39 @@ body {
     0%, 100% { box-shadow: inset 0 0 0 3px rgba(163, 92, 255, 0.35); }
     50% { box-shadow: inset 0 0 0 3px rgba(163, 92, 255, 0.9); }
 }
+
+#turn-light {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid #444;
+    border-bottom: 1px solid #444;
+}
+.slot {
+    width: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    border-radius: 32%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+.material {
+    background: #555;
+    color: #eee;
+    font-size: 15px;
+    font-weight: bold;
+}
+.ability.none { visibility: hidden; }
+.ability.necromancer {
+    background: #9677cf;
+    border: 2px solid #6b3fa0;
+    font-size: 24px;
+}
+.ability.locked { color: rgba(0, 0, 0, 0); }
+.ability.locked.white-piece { text-shadow: 0 0 0 rgba(255, 255, 255, 0.55), 0 0 2px rgba(0, 0, 0, 0.4); }
+.ability.locked.black-piece { text-shadow: 0 0 0 rgba(0, 0, 0, 0.4); }
+.ability.open { box-shadow: 0 0 10px 2px rgba(163, 92, 255, 0.7); }
+.ability.clickable { cursor: pointer; }

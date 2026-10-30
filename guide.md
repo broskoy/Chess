@@ -10,6 +10,14 @@ Chess, but each side's king is a **ruler** with a special power. If you know che
 - **No en passant.** Pawns can only capture diagonally onto the square where the enemy piece stands.
 - **Castling** works as usual. Your ruler can't castle out of, through, or into an attacked square.
 
+## The bar beside the board
+
+The bar to the right of the board is mirrored: the top half belongs to the player at the top, the bottom half to the player at the bottom.
+
+- **Gray boxes** show each side's total material on the board (pawn 1, knight 3, bishop 3, rook 5, queen 9).
+- **Ruler boxes** show what each ruler's power has ready (for example, the Necromancer's grave).
+- **The lights** in the middle show whose turn it is. When the game ends, the winner's light stays on.
+
 ## The rulers
 
 ### King
@@ -27,7 +35,8 @@ Raises fallen enemies to fight for you.
 - You can only raise **enemy pieces**. If the most recent piece to die was yours, the grave is useless to you until the next capture.
 - The grave square must be **empty**. Right after a capture, the capturing piece is standing on the grave, so it's blocked until that piece moves away.
 - A raised pawn has already used its first move, so it can't move two squares.
-- When you can raise a piece, the grave glows purple. Click it to raise.
+- Your purple box in the side bar shows the piece you could raise. It's faded while the grave is blocked, and glows when you can raise it.
+- When you can raise a piece, the grave glows purple. Click the grave or your purple box to raise.
 
 **Tips for playing the Necromancer**
 

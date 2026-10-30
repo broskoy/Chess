@@ -33,6 +33,9 @@ const BACK_RANK = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knigh
 export const PROMOTION_TYPES = ['rook'];
 const FEN_TYPES ={ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
+// Standard piece values: used for material counts, and later the Alchemist's budget and the bot.
+export const PIECE_VALUES = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 0 };
+
 export function opponent(color) {
     return color === WHITE ? BLACK : WHITE;
 }
@@ -271,6 +274,16 @@ export function isSquareAttacked(state, r, c, byColor) {
         }
     }
     return false;
+}
+
+export function materialOf(state, color) {
+    let total = 0;
+    for (const row of state.board) {
+        for (const piece of row) {
+            if (piece && piece.color === color) total += PIECE_VALUES[piece.type];
+        }
+    }
+    return total;
 }
 
 export function findKing(state, color) {

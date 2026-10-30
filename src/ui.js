@@ -1,6 +1,6 @@
 import {
     WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
-    rulerOf,
+    rulerOf, materialOf,
 } from './engine.js';
 import { sounds } from './sound.js';
 
@@ -137,7 +137,7 @@ class ChessUI {
         this.renderBoard();
         this.renderRulerLabel(this.elements.rulerTop, opponent(this.bottomColor));
         this.renderRulerLabel(this.elements.rulerBottom, this.bottomColor);
-        this.renderTurnLight();
+        this.renderSideBar();
         this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
@@ -197,6 +197,49 @@ class ChessUI {
 
     renderRulerLabel(element, color) {
         element.textContent = `${capitalize(color)}: ${RULER_NAMES[rulerOf(this.state, color)]}`;
+    }
+
+    // The bar beside the board, mirrored for each side: material, ruler ability, turn light.
+    renderSideBar() {
+        for (const [position, color] of [['Top', opponent(this.bottomColor)], ['Bottom', this.bottomColor]]) {
+            const material = this.elements[`material${position}`];
+            material.textContent = materialOf(this.state, color);
+            material.title = `${capitalize(color)}'s material on the board`;
+            this.renderAbility(this.elements[`ability${position}`], color);
+        }
+        this.renderTurnLight();
+    }
+
+    // A Necromancer's box shows what they could raise: the grave's enemy piece,
+    // faded while something blocks the grave. A plain King has no ability, so its
+    // box is hidden (but keeps its space, so the turn light stays centered).
+    renderAbility(element, color) {
+        element.className = 'slot ability';
+        element.textContent = '';
+        element.title = '';
+        element.onclick = null;
+        if (rulerOf(this.state, color) !== 'necromancer') {
+            element.classList.add('none');
+            return;
+        }
+
+        element.classList.add('necromancer');
+        const { grave } = this.state;
+        if (grave === null || grave.piece.color === color) {
+            element.title = 'Grave: nothing to raise';
+            return;
+        }
+        const type = grave.piece.type;
+        const blocked = this.state.board[grave.r][grave.c] !== null;
+        element.textContent = SYMBOLS[`${color}-${type}`];
+        element.classList.add(`${color}-piece`, blocked ? 'locked' : 'open');
+        element.title = blocked ? `Grave: ${type}, blocked` : `Grave: ${type}, ready to raise`;
+
+        const raise = this.resurrectMove();
+        if (raise && color === this.state.turn && this.status.result === 'playing') {
+            element.classList.add('clickable');
+            element.onclick = () => this.play(raise);
+        }
     }
 
     // Two lights matching the board orientation: the side to move is lit,
@@ -291,6 +334,10 @@ function bindSettingsForm(form, ui) {
 const ui = new ChessUI({
     board: document.getElementById('board'),
     turnLight: document.getElementById('turn-light'),
+    materialTop: document.getElementById('material-top'),
+    materialBottom: document.getElementById('material-bottom'),
+    abilityTop: document.getElementById('ability-top'),
+    abilityBottom: document.getElementById('ability-bottom'),
     rulerTop: document.getElementById('ruler-top'),
     rulerBottom: document.getElementById('ruler-bottom'),
     status: document.getElementById('status'),

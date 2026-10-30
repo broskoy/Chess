@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createInitialState, fromFEN, getLegalMoves, getStatus, applyMove } from '../src/engine.js';
+import { createInitialState, fromFEN, getLegalMoves, getStatus, applyMove, materialOf } from '../src/engine.js';
 
 // Standard chess rules, where moves into check are illegal.
 const STANDARD = { kingCapture: false };
@@ -249,4 +249,16 @@ test('under standard rules, a resurrection can block check', () => {
     const state = fromFEN('4k3/8/8/8/8/8/8/r3K3 w - - 0 1', { ...STANDARD, ...NECRO });
     state.grave = { r: 7, c: 2, piece: { type: 'knight', color: 'black', hasMoved: true, promoted: false } };
     assert.ok(resurrect(state));
+});
+
+test('material counts piece values on the board', () => {
+    const start = createInitialState();
+    assert.equal(materialOf(start, 'white'), 39);
+    assert.equal(materialOf(start, 'black'), 39);
+
+    // A raised enemy piece counts for the Necromancer.
+    const state = fromFEN('4k3/8/8/3N4/8/8/8/4K3 w - - 0 1');
+    state.board[3][3] = { type: 'knight', color: 'black', hasMoved: true, promoted: false };
+    assert.equal(materialOf(state, 'black'), 3);
+    assert.equal(materialOf(state, 'white'), 0);
 });
