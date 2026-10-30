@@ -51,6 +51,10 @@ These carry over from standard chess, with a few deliberate changes.
 ### Pawn double step
 - A pawn's double step depends on a per-piece **`hasMoved` flag**, not on its rank. This matters for pieces that come back (resurrected) or change type (converted).
 
+### Promotion
+- A pawn reaching the last rank **promotes to a rook** for now. Some promotion is needed so pushing pawns stays a goal, but a free queen is too strong.
+- Rulers may get their own promotion rules later.
+
 ### No en passant
 - Removed. It exists to stop a double-stepping pawn from slipping past an enemy pawn, a subtlety that matters little next to the ruler abilities, and many casual players don't know it.
 - It also means every capture leaves the dead piece under the capturer, so every grave starts blocked.
@@ -72,7 +76,8 @@ These carry over from standard chess, with a few deliberate changes.
 ### Phase 1 — Standard chess (done)
 - [x] Check, checkmate and stalemate (standard rules mode)
 - [x] King capture rule (setting, on by default)
-- [x] Castling, promotion with a choice of piece
+- [x] Castling
+- [x] Promotion (rook only for now; the UI shows a picker only when there's a choice)
 - [x] Removed en passant
 - [x] Per-piece `hasMoved` flag; castling rights tracking
 - [x] Game-over message, restart, undo

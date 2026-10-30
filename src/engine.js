@@ -23,7 +23,9 @@ const VECTORS = {
 const ALL_DIRECTIONS = [...VECTORS.ortho, ...VECTORS.diag];
 
 const BACK_RANK = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
-export const PROMOTION_TYPES = ['queen', 'rook', 'bishop', 'knight'];
+// Pawns only promote to a rook for now, so promotion isn't too strong.
+// Rulers may get their own promotion rules later.
+export const PROMOTION_TYPES = ['rook'];
 const FEN_TYPES ={ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
 export function opponent(color) {

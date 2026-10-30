@@ -129,13 +129,13 @@ test('perft depth 1 with castling ("Kiwipete" position)', () => {
 const findMove = (state, from, to) => getLegalMoves(state).find(m =>
     m.from && m.from.r === from[0] && m.from.c === from[1] && m.to.r === to[0] && m.to.c === to[1]);
 
-test('a pawn reaching the last rank promotes, with a choice of piece', () => {
+test('a pawn reaching the last rank promotes to a rook', () => {
     const state = fromFEN('4k3/1P6/8/8/8/8/8/4K3 w - - 0 1');
     const promotions = getLegalMoves(state).filter(m => m.from.r === 1 && m.from.c === 1);
-    assert.deepEqual(promotions.map(m => m.promotion).sort(), ['bishop', 'knight', 'queen', 'rook']);
+    assert.deepEqual(promotions.map(m => m.promotion), ['rook']);
 
-    const next = applyMove(state, promotions.find(m => m.promotion === 'knight'));
-    assert.deepEqual(next.board[0][1], { type: 'knight', color: 'white', hasMoved: true, promoted: true });
+    const next = applyMove(state, promotions[0]);
+    assert.deepEqual(next.board[0][1], { type: 'rook', color: 'white', hasMoved: true, promoted: true });
 });
 
 test('a captured promoted piece goes to hand as itself, or as a pawn with demotePromoted', () => {
@@ -154,8 +154,9 @@ test('perft depth 1 on positions with castling and promotion', () => {
     const position4 = fromFEN('r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1', STANDARD);
     assert.equal(perft(position4, 1), 6);
 
+    // Standard count is 44, including 4 promotions for d7xc8. Rook-only promotion leaves 1 of them.
     const position5 = fromFEN('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8', STANDARD);
-    assert.equal(perft(position5, 1), 44);
+    assert.equal(perft(position5, 1), 41);
 });
 
 const drops = state => getLegalMoves(state).filter(m => m.type === 'drop');
