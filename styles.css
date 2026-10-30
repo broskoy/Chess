@@ -4,30 +4,32 @@
     --tile: clamp(40px, min(calc((100vh - 170px) / 8), calc((100vw - 200px) / 8)), 80px);
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
 
-    /* Side bar sizes. A squircle is as wide as the turn light's housing. */
-    --socket: 34px;
-    --light-pad: 8px;
-    --light-gap: 10px;
-    --slot: calc(var(--socket) + 2 * var(--light-pad) + 4px);   /* + 2 × 2px border */
+    /* Side bar sizes, all derived from the squircle size (at most 54px). The bar holds
+       4 buttons, the turn light and 4 item slots, which take about 11 squircles of
+       height, so it scales with the board to fit beside it. A squircle is as wide as
+       the turn light's housing (socket + padding + 2 × 2px border). */
+    --slot: min(54px, calc(var(--board-width) / 11.5));
+    --light-pad: calc(var(--slot) * 0.15);
+    --light-gap: calc(var(--slot) * 0.185);
+    --socket: calc(var(--slot) - 2 * var(--light-pad) - 4px);
     --bar-gap: 16px;
 
     /* Player rows hold up to 8 squircles (icon, material, ability, 5 conversions)
        and stay within the board's width. */
     --row-gap: 8px;
-    --row-item: min(var(--slot), calc((var(--board-width) - 7 * var(--row-gap)) / 8));
+    --row-item: min(54px, calc((var(--board-width) - 7 * var(--row-gap)) / 8));
 }
 
 /* Narrow screens (phones): the board and side bar are centered together rather than
    centering the board alone, and the side bar shrinks, so the board can be wider. */
 @media (max-width: 700px) {
     :root {
-        --socket: 26px;
-        --light-pad: 5px;
-        --light-gap: 8px;
         --bar-gap: 8px;
         --row-gap: 5px;
+        /* The board, the gap and the side bar (1/11.5 of the board) share the width
+           inside 12px margins: board = (width - 24px - 8px) × 11.5 / 12.5. */
         --tile: clamp(28px, min(calc((100vh - 170px) / 8),
-            calc((100vw - 24px - 10px - var(--bar-gap) - var(--slot)) / 8)), 80px);
+            calc(((100vw - 32px) * 0.92 - 10px) / 8)), 80px);
     }
     body {
         box-sizing: border-box;
@@ -191,8 +193,8 @@ body {
 
 
 /* Side bar beside the board, positioned so the board itself stays centered (on wide screens).
-   It spans the board's height: game buttons at the top, the turn light in the middle,
-   and a slot for items at the bottom. */
+   It spans the board's height: 4 game buttons at the top, the turn light in the middle,
+   and 4 slots for items at the bottom. */
 #board-area { position: relative; }
 #side-bar {
     position: absolute;
@@ -204,7 +206,7 @@ body {
     justify-content: space-between;
     align-items: center;
 }
-#game-buttons, #turn-light {
+#game-buttons, #item-slots, #turn-light {
     display: flex;
     flex-direction: column;
     gap: var(--light-gap);
@@ -283,7 +285,7 @@ body {
 .ability.locked.black-piece { text-shadow: 0 0 0 rgba(0, 0, 0, 0.4); }
 .ability.open { box-shadow: 0 0 10px 2px rgba(163, 92, 255, 0.7); }
 .ability.clickable { cursor: pointer; }
-#item-slot { border: 2px dashed #444; }
+.item-slot { border: 2px dashed #444; }
 
 /* The Alchemist's budget: a blue squircle */
 .ability.alchemist {

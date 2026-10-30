@@ -156,7 +156,7 @@ These carry over from standard chess, with a few deliberate changes.
   - Necromancer box: the grave's enemy piece in the Necromancer's color; faded while blocked, glowing when it can be raised (click to raise); empty when there's nothing to raise
   - A plain King has no ability box
   - Alchemist box: budget in blue
-- [x] Side bar beside the board, spanning its height, for general controls: home, restart, undo and mute at the top, the turn light in the middle, and an empty slot for items at the bottom
+- [x] Side bar beside the board, spanning its height, for general controls: home, restart, undo and mute at the top, the turn light in the middle, and 4 empty slots for items at the bottom (symmetric, so the light sits in the middle). Its squircles scale with the board so it always fits beside it
 - [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork
 
