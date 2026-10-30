@@ -20,6 +20,7 @@ The first version let you drop captured pieces back onto the board (like shogi /
 - There is **one grave** on the board: the square where the **most recent piece died**, from either side.
 - The grave holds that piece. A new death anywhere replaces the grave.
 - **Resurrect:** the Necromancer spends their turn to raise the piece in the grave, on the grave's square. It comes back **in the Necromancer's color**, whichever side it died for.
+- A raised piece counts as already moved, so a raised pawn has **no double step**.
 - The grave square must be **empty**. Right after a capture, the capturing piece stands on the grave and blocks it. The grave opens only once that piece moves away. This keeps the ability tame for now.
 - Range: anywhere on the board (the grave's location is the only constraint).
 - **Tactics this creates:**
@@ -65,7 +66,6 @@ These carry over from standard chess, with a few deliberate changes.
 ## Open questions (decide through play-testing)
 
 - **Necromancer:**
-  - Does a resurrected pawn get its double step again (`hasMoved = false`)?
   - Does a promoted piece come back as its promoted type, or as a pawn?
   - Can a resurrection capture or give check? (It can't capture, since the square must be empty; giving check is allowed for now.)
 - **Alchemist:** starting budget; whether budget is also earned per turn or per capture; whether upgrading to a queen is allowed or capped; one conversion per turn.
@@ -86,12 +86,12 @@ These carry over from standard chess, with a few deliberate changes.
 
 ### Phase 2 — Rulers framework and the Necromancer
 - [x] Remove drops (engine, hands UI, drop settings)
-- [ ] Each side has a ruler type in the game state (plain king, Necromancer, later Alchemist)
-- [ ] Track the grave: square and dead piece, updated on every capture
-- [ ] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
+- [x] Each side has a ruler type (settings `whiteRuler` / `blackRuler`: plain king, Necromancer, later Alchemist)
+- [x] Track the grave: square and dead piece, updated on every capture
+- [x] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
 - [ ] Show the grave on the board (marker plus the dead piece), and a way to choose "resurrect" in the UI
 - [ ] Choose each side's ruler for testing (two players on one screen until the bot exists)
-- [ ] Tests for grave tracking, blocking, resurrection colors
+- [x] Tests for grave tracking, blocking, resurrection colors
 
 ### Phase 3 — Alchemist
 - [ ] Budget in the game state, conversion moves, UI to pick a piece and its new type

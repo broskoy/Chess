@@ -9,7 +9,16 @@ export const BLACK = 'black';
 
 export const DEFAULT_SETTINGS = {
     kingCapture: true,       // the king can be captured to win; moves into check are allowed
+    whiteRuler: 'king',      // one of RULERS
+    blackRuler: 'king',
 };
+
+// Each side's king is a ruler. A plain king has no ability.
+export const RULERS = ['king', 'necromancer'];
+
+export function rulerOf(state, color) {
+    return state.settings[`${color}Ruler`];
+}
 
 const VECTORS = {
     ortho: [[1, 0], [-1, 0], [0, 1], [0, -1]],
@@ -52,6 +61,8 @@ export function createInitialState(settings = {}) {
         },
         halfmoveClock: 0,
         fullmoveNumber: 1,
+        // Where the most recent piece died: { r, c, piece }. A Necromancer can raise it.
+        grave: null,
         settings: { ...DEFAULT_SETTINGS, ...settings },
     };
 }
@@ -98,6 +109,7 @@ export function getPiece(state, r, c) {
 //
 // Moves are plain objects:
 //   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
+//   { type: 'resurrect', to: {r, c} }              Necromancer raises the piece in the grave
 
 function pieceMoves(state, r, c) {
     const piece = state.board[r][c];
@@ -192,6 +204,15 @@ function castlingMoves(state, color) {
     return moves;
 }
 
+// A Necromancer can raise the piece in the grave, but only once nothing stands on it.
+// Right after a capture the capturing piece is on the grave, so it starts blocked.
+function resurrectMoves(state) {
+    const { grave } = state;
+    if (rulerOf(state, state.turn) !== 'necromancer' || grave === null) return [];
+    if (state.board[grave.r][grave.c] !== null) return [];
+    return [{ type: 'resurrect', to: { r: grave.r, c: grave.c } }];
+}
+
 // All moves for the side to move, ignoring whether they leave the king in check.
 function pseudoLegalMoves(state) {
     const moves = [];
@@ -201,6 +222,7 @@ function pseudoLegalMoves(state) {
             if (piece && piece.color === state.turn) moves.push(...pieceMoves(state, r, c));
         }
     }
+    moves.push(...resurrectMoves(state));
     return moves;
 }
 
@@ -304,9 +326,12 @@ function cloneState(state) {
 export function applyMove(state, move) {
     const next = cloneState(state);
     const color = state.turn;
+    if (move.type === 'resurrect') return applyResurrect(next, color);
+
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
     const captured = next.board[to.r][to.c];
+    if (captured && captured.type !== 'king') next.grave = { r: to.r, c: to.c, piece: captured };
 
     next.board[to.r][to.c] = move.promotion
         ? makePiece(move.promotion, piece.color, { hasMoved: true, promoted: true })
@@ -321,6 +346,19 @@ export function applyMove(state, move) {
 
     updateCastlingRights(next, piece, from, to);
     next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
+    if (color === BLACK) next.fullmoveNumber++;
+    next.turn = opponent(color);
+    return next;
+}
+
+// `next` is already a copy of the state, so it can be changed in place.
+function applyResurrect(next, color) {
+    const { r, c, piece } = next.grave;
+    // The raised piece joins the Necromancer's side, whoever it died for.
+    // It counts as moved, so a raised pawn has no double step.
+    next.board[r][c] = makePiece(piece.type, color, { hasMoved: true, promoted: piece.promoted });
+    next.grave = null;
+    next.halfmoveClock = 0;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;
