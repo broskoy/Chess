@@ -120,6 +120,7 @@ class ChessUI {
         this.renderBoard();
         this.renderHand(this.elements.handTop, opponent(this.bottomColor));
         this.renderHand(this.elements.handBottom, this.bottomColor);
+        this.renderTurnLight();
         this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
@@ -184,6 +185,18 @@ class ChessUI {
             note.className = 'hand-note';
             note.textContent = 'You dropped last turn: make a board move first.';
             element.appendChild(note);
+        }
+    }
+
+    // Two lights matching the board orientation: the side to move is lit,
+    // and once the game is over the winner stays lit.
+    renderTurnLight() {
+        const { result, winner } = this.status;
+        const litColor = result === 'playing' ? this.state.turn : winner;
+        const [top, bottom] = this.elements.turnLight.children;
+        for (const [light, color] of [[top, opponent(this.bottomColor)], [bottom, this.bottomColor]]) {
+            light.className = `light ${color}-light`;
+            light.classList.toggle('on', color === litColor);
         }
     }
 
@@ -254,6 +267,7 @@ function bindSettingsForm(form, ui) {
 
 const ui = new ChessUI({
     board: document.getElementById('board'),
+    turnLight: document.getElementById('turn-light'),
     handTop: document.getElementById('hand-top'),
     handBottom: document.getElementById('hand-bottom'),
     status: document.getElementById('status'),

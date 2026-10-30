@@ -125,3 +125,33 @@ body {
 #settings select { margin-left: 6px; }
 
 #controls button:disabled { opacity: 0.45; cursor: default; }
+
+/* Turn indicator beside the board, positioned so the board itself stays centered */
+#board-area { position: relative; }
+#turn-light {
+    position: absolute;
+    left: calc(100% + 16px);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+    background: #333;
+    border: 2px solid #444;
+    border-radius: 14px;
+}
+.light {
+    width: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    border-radius: 32%;   /* squircle-ish */
+    opacity: 0.2;
+    transition: opacity 0.2s, box-shadow 0.2s;
+}
+.white-light { background: #f4f4f4; }
+.black-light { background: #000; border: 2px solid #777; }
+.light.on {
+    opacity: 1;
+    box-shadow: 0 0 12px 3px rgba(246, 246, 105, 0.6);
+}

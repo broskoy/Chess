@@ -82,7 +82,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 ### Phase 4 — Release and polish
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
 - [x] Undo (button and Ctrl+Z)
-- [ ] Turn indicator
+- [x] Turn indicator ("stoplight" beside the board; the winner stays lit at game end)
 - [ ] Sounds
 - Move notation for drops (e.g. `N@e4`), piece images instead of Unicode
 
