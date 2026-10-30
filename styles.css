@@ -1,7 +1,7 @@
 /* Square size: as large as the window allows, leaving about 230px of height for the
    labels, choices row and buttons, and room beside the board for the side bar. */
 :root {
-    --tile: clamp(40px, min(calc((100vh - 230px) / 8), calc((100vw - 200px) / 8)), 110px);
+    --tile: clamp(40px, min(calc((100vh - 230px) / 8), calc((100vw - 200px) / 8)), 80px);
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
 }
 
