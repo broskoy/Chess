@@ -206,3 +206,39 @@ body {
 .ability.locked.black-piece { text-shadow: 0 0 0 rgba(0, 0, 0, 0.4); }
 .ability.open { box-shadow: 0 0 10px 2px rgba(163, 92, 255, 0.7); }
 .ability.clickable { cursor: pointer; }
+
+/* The Alchemist's budget: a blue squircle in the side bar */
+.ability.alchemist {
+    background: #3f7bd1;
+    border: 2px solid #2a5ca6;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+}
+.ruler-alchemist { text-shadow: 0 0 6px #4a9bff, 0 0 2px #000; }
+
+/* Conversion choices under the board, each with its price in points */
+#convert { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #ccc; }
+#convert[hidden] { display: none; }
+.convert-label { margin-right: 4px; font-size: 14px; }
+.convert-choice {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    font-size: 34px;
+    background: #EEEED2;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.convert-choice:hover:not(:disabled) { border-color: #3f7bd1; }
+.convert-choice:disabled { cursor: default; opacity: 0.4; }
+.convert-choice .price {
+    position: absolute;
+    right: 2px;
+    bottom: 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: #2a5ca6;
+    text-shadow: none;
+}

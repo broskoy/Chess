@@ -63,6 +63,12 @@ export const sounds = {
         knock({ frequency: 250, duration: 0.15, volume: 1.6 });
         tone({ frequency: 110, duration: 0.6, volume: 0.18, delay: 0.05, type: 'triangle', slideTo: 330 });
     },
+    // A quick shimmer of rising notes: one thing turning into another.
+    convert() {
+        [660, 880, 1175].forEach((frequency, i) => {
+            tone({ frequency, duration: 0.12, volume: 0.08, delay: i * 0.05, type: 'triangle' });
+        });
+    },
     check() {
         tone({ frequency: 880, duration: 0.18, volume: 0.12, delay: 0.08, type: 'triangle' });
     },

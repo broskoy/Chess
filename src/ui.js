@@ -1,6 +1,6 @@
 import {
     WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
-    rulerOf, materialOf,
+    rulerOf, materialOf, CONVERTIBLE_TYPES, conversionCost,
 } from './engine.js';
 import { sounds } from './sound.js';
 
@@ -9,7 +9,7 @@ const SYMBOLS = {
     'black-king': '♚', 'black-queen': '♛', 'black-rook': '♜', 'black-bishop': '♝', 'black-knight': '♞', 'black-pawn': '♟',
 };
 
-const RULER_NAMES = { king: 'King', necromancer: 'Necromancer' };
+const RULER_NAMES = { king: 'King', necromancer: 'Necromancer', alchemist: 'Alchemist' };
 
 const sameSquare = (a, b) => a !== null && b !== null && a.r === b.r && a.c === b.c;
 const capitalize = s => s[0].toUpperCase() + s.slice(1);
@@ -60,7 +60,8 @@ class ChessUI {
         this.moves.push(move);
         this.clearSelection();
         this.update();
-        this.playSound(move.type === 'resurrect' ? 'resurrect' : isCapture ? 'capture' : 'move');
+        const special = { resurrect: 'resurrect', convert: 'convert' }[move.type];
+        this.playSound(special ?? (isCapture ? 'capture' : 'move'));
     }
 
     // The move sound, followed by a check or game-end sound when relevant.
@@ -141,6 +142,7 @@ class ChessUI {
         this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
+        this.renderConvertChoices();
     }
 
     renderBoard() {
@@ -151,8 +153,8 @@ class ChessUI {
         const { grave } = this.state;
         const canRaise = this.resurrectMove() !== null && this.status.result === 'playing';
         const lastMove = this.moves[this.moves.length - 1] ?? null;
-        // A resurrection has no starting square, only where the piece rose.
-        const lastSquares = lastMove ? [lastMove.from ?? null, lastMove.to] : [];
+        // A resurrection only has the square where the piece rose, a conversion only the piece's square.
+        const lastSquares = lastMove ? [lastMove.from ?? null, lastMove.to ?? null, lastMove.at ?? null] : [];
 
         // With black at the bottom the board is rotated 180°, so both rows and columns reverse.
         const flipped = this.bottomColor !== WHITE;
@@ -218,7 +220,14 @@ class ChessUI {
         element.textContent = '';
         element.title = '';
         element.onclick = null;
-        if (rulerOf(this.state, color) !== 'necromancer') {
+        const ruler = rulerOf(this.state, color);
+        if (ruler === 'alchemist') {
+            element.classList.add('alchemist');
+            element.textContent = this.state.budget[color];
+            element.title = `${capitalize(color)}'s Alchemist budget`;
+            return;
+        }
+        if (ruler !== 'necromancer') {
             element.classList.add('none');
             return;
         }
@@ -249,6 +258,47 @@ class ChessUI {
         const color = result === 'playing' ? this.state.turn : winner;
         const position = color === null ? 'middle' : color === this.bottomColor ? 'bottom' : 'top';
         this.elements.turnMarker.className = `${position} ${color ?? 'draw'}`;
+    }
+
+    // When an Alchemist's piece is selected, a row under the board offers every
+    // conversion with its price; ones that aren't allowed right now are greyed out.
+    renderConvertChoices() {
+        const element = this.elements.convert;
+        element.innerHTML = '';
+        const piece = this.selected ? getPiece(this.state, this.selected.r, this.selected.c) : null;
+        const show = piece !== null && piece.type !== 'king' && !this.promotionChoices
+            && rulerOf(this.state, piece.color) === 'alchemist' && this.status.result === 'playing';
+        element.hidden = !show;
+        if (!show) return;
+
+        const label = document.createElement('span');
+        label.className = 'convert-label';
+        label.textContent = 'Convert to:';
+        element.appendChild(label);
+
+        for (const into of CONVERTIBLE_TYPES) {
+            if (into === piece.type) continue;
+            const move = this.legalMoves.find(m =>
+                m.type === 'convert' && sameSquare(m.at, this.selected) && m.into === into);
+            const cost = conversionCost(piece.type, into);
+            const button = document.createElement('button');
+            button.className = `convert-choice ${piece.color}-piece`;
+            button.textContent = SYMBOLS[`${piece.color}-${into}`];
+            const price = document.createElement('span');
+            price.className = 'price';
+            price.textContent = cost < 0 ? `+${-cost}` : cost > 0 ? `−${cost}` : '0';
+            button.appendChild(price);
+            button.disabled = !move;
+            if (move) {
+                button.title = `Turn into a ${into}`;
+                button.onclick = () => this.play(move);
+            } else {
+                button.title = into === 'pawn' && cost <= this.state.budget[piece.color]
+                    ? 'New pawns can only be made in your own half'
+                    : 'Not enough points';
+            }
+            element.appendChild(button);
+        }
     }
 
     renderPromotionChoices() {
@@ -311,7 +361,8 @@ function loadSettings() {
     return settings;
 }
 
-// Form fields are named after the settings: checkboxes hold booleans, selects hold strings.
+// Form fields are named after the settings: checkboxes hold booleans, selects hold
+// strings, or numbers when marked with data-number.
 function bindSettingsForm(form, ui) {
     const fields = [...form.elements].filter(field => field.name);
     for (const field of fields) {
@@ -321,7 +372,8 @@ function bindSettingsForm(form, ui) {
     form.onchange = () => {
         const settings = {};
         for (const field of fields) {
-            settings[field.name] = field.type === 'checkbox' ? field.checked : field.value;
+            if (field.type === 'checkbox') settings[field.name] = field.checked;
+            else settings[field.name] = 'number' in field.dataset ? Number(field.value) : field.value;
         }
         saveStored(SETTINGS_KEY, settings);
         ui.setSettings(settings);
@@ -339,6 +391,7 @@ const ui = new ChessUI({
     rulerBottom: document.getElementById('ruler-bottom'),
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
+    convert: document.getElementById('convert'),
     undo: document.getElementById('undo'),
 }, loadSettings());
 document.getElementById('restart').onclick = () => ui.newGame();
