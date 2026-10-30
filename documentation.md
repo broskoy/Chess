@@ -42,13 +42,20 @@ The first version let you drop captured pieces back onto the board (like shogi /
 - Possible buff: **two graves** holding the last two deaths. Probably unnecessary, and two locked squares may tie down too much of the board; also makes removing a strong piece for good harder.
 - For the bot: an evaluation that only counts material will misjudge the Necromancer. It needs to value a strong enemy piece in a grave that can open, and treat a piece standing on that grave as less free than it looks.
 
-### Alchemist (planned, rules still open)
-- Converts one of their pieces into another type, spending the turn.
-- Has a **budget** of points, using standard piece values (pawn 1, knight 3, bishop 3, rook 5, queen 9).
+### Alchemist
+- **Convert:** the Alchemist spends their turn to turn one of their pieces into another type (pawn, knight, bishop, rook or queen). The ruler can't be converted, and nothing can become a ruler.
+- Has a **budget** of points, using the piece values (pawn 1, knight 3, bishop 3, rook 5, queen 9):
   - **Downgrading** a piece earns the difference (rook → knight: +2).
-  - **Upgrading** a piece costs the difference (pawn → bishop: −2).
-- Starts with **0 points** on a full board, so the first conversion must be a downgrade (a stuck rook becoming an active knight, for example). The starting budget is the main tuning lever.
-- Likely limits: the king/ruler can't be converted. Pawns can't be created on the first or last rank.
+  - **Upgrading** a piece costs the difference (pawn → bishop: −2). You can't spend more than you have.
+  - **Equal-value swaps** (knight ↔ bishop) are free, but still cost the turn.
+  - Points come **only from downgrading**: nothing from captures or time.
+- **Queens are allowed.** Bigger isn't automatically better: two rooks that protect each other often beat a queen, and a starting budget of 0 makes a queen expensive (pawn → queen costs 8).
+- **New pawns only in your own half** (ranks 1–4 for white, 5–8 for black). A pawn made by alchemy hasn't marched anywhere. This also blocks two exploits:
+  - Creating a pawn next to promotion that promotes straight away.
+  - A points farm: rook on the 7th → pawn (+4), promote back to a rook, repeat.
+- A converted piece counts as moved, so a new pawn has no double step. Converting a rook on its corner ends that castling right.
+- **Starting budget** is a setting (default 0, applies to new games). It's the main tuning lever: a bigger budget suits the Alchemist's rushing playstyle against the slower Necromancer.
+- Known shortcut, accepted for now: a pawn about to promote can become a rook for free, then a queen for 4 points (queen promotion for 4 points and an extra turn). Watch it in play-testing.
 - The same point values can define **army budgets**, allowing different starting setups per round.
 
 ## Base rules
@@ -81,7 +88,7 @@ These carry over from standard chess, with a few deliberate changes.
 - **Necromancer:**
   - Does a promoted piece come back as its promoted type, or as a pawn?
   - Can a resurrection capture or give check? (It can't capture, since the square must be empty; giving check is allowed for now.)
-- **Alchemist:** starting budget; whether budget is also earned per turn or per capture; whether upgrading to a queen is allowed or capped; one conversion per turn.
+- **Alchemist:** what the right starting budget is; whether the promote-then-upgrade shortcut is too strong.
 - **Rounds:** how many, what changes between them (bot ruler, army budget, bot strength), and what the player keeps between rounds.
 
 ## Scope
@@ -107,8 +114,9 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Tests for grave tracking, blocking, resurrection colors
 
 ### Phase 3 — Alchemist
-- [ ] Budget in the game state, conversion moves, UI to pick a piece and its new type
-- [ ] Tests
+- [x] Budget in the game state, conversion moves (`{ type: 'convert', at, into }`)
+- [x] UI: selecting an Alchemist's piece shows a "Convert to:" row with prices; blue budget squircle in the side bar; starting budget in the Rules panel; conversion sound
+- [x] Tests
 
 ### Phase 4 — Bot
 - [ ] Alpha-beta search a few moves deep with a material-based evaluation, running in the browser
@@ -132,7 +140,7 @@ These carry over from standard chess, with a few deliberate changes.
   - Material: total piece values on the board per side (pawn 1, knight 3, bishop 3, rook 5, queen 9), so players don't have to recount after raises and conversions
   - Necromancer box: the grave's enemy piece in the Necromancer's color; faded while blocked, glowing when it can be raised (click to raise); empty when there's nothing to raise
   - A plain King has no ability box, so its card only shows material
-  - Alchemist box (planned): budget in blue
+  - Alchemist box: budget in blue
 - [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork
 
@@ -152,12 +160,12 @@ These carry over from standard chess, with a few deliberate changes.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design
-- **Game state is one plain object**: board, turn, castling rights, rulers, grave, clocks and settings. Everything the rules depend on lives there.
+- **Game state is one plain object**: board, turn, castling rights, grave, Alchemist budgets, clocks and settings (including each side's ruler). Everything the rules depend on lives there.
 - **Pure functions**: `applyMove(state, move)` returns a new state and never changes the old one. Pieces are never mutated, so copies can share them cheaply.
 - **Abilities are move types**, so the UI, undo and the bot handle them like any other move:
   - Board move: `{ type: 'move', from, to, castle?, promotion? }`
   - Resurrect: `{ type: 'resurrect' }` (the grave holds the square and piece)
-  - Convert (Alchemist): `{ type: 'convert', at, to }`
+  - Convert (Alchemist): `{ type: 'convert', at, into }`
 - Legal move generation: generate all moves including abilities, then (in standard-rules mode) drop any that leave your own king in check.
 - `fromFEN` loads standard FEN positions, mainly for tests.
 

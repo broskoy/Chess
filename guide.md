@@ -52,12 +52,26 @@ Raises fallen enemies to fight for you.
 - **Use the grave as bait.** While your queen is in the grave, a piece of yours that looks free might not be: if the Necromancer takes it, that piece replaces your queen in the grave.
 - **Step off with care.** Moving your piece off the grave opens it. Do it when the raise wouldn't hurt, or when your move creates a bigger threat.
 
-### Alchemist (coming soon)
+### Alchemist
 
-Turns pieces into other pieces using a budget of points. Downgrading a piece earns points, and upgrading one costs them. The details are still being play-tested.
+Turns pieces into other pieces using a budget of points.
 
-**Early tips**
+**How it works**
 
+- On your turn, instead of moving, you can **convert** one of your pieces into another type. Your ruler can't be converted.
+- Pieces are worth points: pawn 1, knight 3, bishop 3, rook 5, queen 9.
+  - **Downgrading** earns the difference. A rook becoming a knight earns 2 points.
+  - **Upgrading** costs the difference. A pawn becoming a bishop costs 2 points.
+  - **Swapping** between equal pieces (knight and bishop) is free, but still uses your turn.
+- Your budget is the **blue box** in the side bar. You usually start with 0, so your first conversion has to be a downgrade.
+- **New pawns** can only be made in your own half of the board.
+- A converted piece counts as having moved, so a new pawn can't move two squares.
+- Select one of your pieces to see the **Convert to:** row under the board, with the price of each option. Greyed-out options aren't allowed right now; hover over one to see why.
+
+**Tips for playing the Alchemist**
+
+- **Fix your worst piece.** A rook stuck behind its pawns earns 2 points as an active knight. Downgrades are how you get going, and they can make your army better, not worse.
 - **More pieces beat bigger pieces.** Two rooks that protect each other are often better than a queen, which can only harass. Don't assume an upgrade is always an improvement.
-- **A queen is a target.** Against a Necromancer, a freshly made queen is exactly the piece that hurts most when it lands in the enemy's grave.
+- **Switch shapes to fit the position.** A free knight-to-bishop swap can turn a blocked piece into an active one, or put a new attacker on a weak color.
 - **A queen is a hunter.** Since capturing the ruler wins, a queen chasing an exposed ruler can end the game fast. Keep your ruler sheltered when the opponent has one.
+- **A queen is a target.** Against a Necromancer, a freshly made queen is exactly the piece that hurts most when it lands in the enemy's grave.
