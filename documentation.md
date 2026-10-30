@@ -133,7 +133,8 @@ These carry over from standard chess, with a few deliberate changes.
 Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only uses the engine, so it also runs in Node.
 - [x] Random bot: plays black (a plain King) and picks any legal move after a short pause. Undo takes back both its reply and your move
 - [x] Greedy bot: takes the most valuable capture available (the ruler above all), otherwise a random move
-- [ ] Search a few moves deep (alpha-beta) with a material-based evaluation, in a Web Worker so the page doesn't freeze
+- [x] Search (alpha-beta with iterative deepening, about 0.8s per move) in a Web Worker so the page doesn't freeze. Evaluation: material, plus small bonuses for central knights/bishops and advanced pawns; capturing the ruler is a win (faster wins preferred). Past the search depth it follows captures until quiet, and responds when its ruler is attacked. Reaches depth 4-5 in the middlegame and about 7 in endgames (200-600k positions/s). Equal moves are picked at random so games vary
+  - Known gap: unspent alchemy points are worth 0, so an Alchemist bot would spend them as soon as an upgrade looks good. To be tuned by self-play
 - [ ] Teach it the rulers. Resurrecting and converting are already moves, so the search sees what they do; what it can't see is *potential* (an open grave, a piece tied to the grave, unspent points). Those values start at 0
 - [ ] Difficulty levels (how deep it looks)
 
@@ -178,7 +179,8 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position, which undo uses.
 - [src/sound.js](src/sound.js): sound effects generated with the Web Audio API.
 - [src/menu.js](src/menu.js): the main menu (ruler cards and start text).
-- [src/bot.js](src/bot.js): the computer opponent.
+- [src/bot.js](src/bot.js): the computer opponent (random, greedy, and the search it plays with).
+- [src/bot-worker.js](src/bot-worker.js): runs the bot's search in a background thread.
 - [src/rulers.js](src/rulers.js): each ruler's name, placeholder art and color, shared by the menu and the game.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 

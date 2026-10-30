@@ -1,6 +1,6 @@
 # How to Play
 
-Chess, but each side's king is a **ruler** with a special power. If you know chess, you already know most of the game. This guide covers what's different, and some tips for each ruler.
+Chess, but each side's king is a **ruler** with a special power. Pick your ruler in the menu and play white against the computer. If you know chess, you already know most of the game. This guide covers what's different, and some tips for each ruler.
 
 ## What's different from normal chess
 

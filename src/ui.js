@@ -6,9 +6,7 @@ import {
 import { sounds } from './sound.js';
 import { setupMenu } from './menu.js';
 import { RULER_INFO } from './rulers.js';
-import { chooseMove } from './bot.js';
-
-// A short pause before the bot moves, so its move doesn't appear instantly.
+// The bot never answers faster than this, so its move doesn't appear instantly.
 const BOT_DELAY_MS = 500;
 
 const SYMBOLS = {
@@ -26,6 +24,10 @@ class ChessUI {
         this.bottomColor = WHITE;   // which side is drawn at the bottom of the screen
         this.botColor = BLACK;      // the side the bot plays, or null for two players on one screen
         this.botTimer = null;
+        this.botRequest = 0;        // numbers each question to the bot, so stale answers are ignored
+        // The bot thinks in a background thread, so the page stays responsive.
+        this.botWorker = new Worker(new URL('./bot-worker.js', import.meta.url), { type: 'module' });
+        this.botWorker.onmessage = ({ data }) => this.receiveBotMove(data);
         this.newGame();
     }
 
@@ -53,18 +55,27 @@ class ChessUI {
         this.newGame();
     }
 
-    // Lets the bot move after a short pause when it's its turn.
+    // Asks the bot for a move when it's its turn.
     scheduleBotMove() {
         this.stopBot();
         if (this.status.result !== 'playing' || this.state.turn !== this.botColor) return;
+        this.botAskedAt = performance.now();
+        this.botWorker.postMessage({ id: this.botRequest, state: this.state });
+    }
+
+    // Plays the bot's answer, after the minimum delay, unless the game has moved on
+    // since the question (undo, restart, back to the menu).
+    receiveBotMove({ id, move }) {
+        if (id !== this.botRequest || move === null) return;
+        const wait = Math.max(0, BOT_DELAY_MS - (performance.now() - this.botAskedAt));
         this.botTimer = setTimeout(() => {
             this.botTimer = null;
-            const move = chooseMove(this.state);
-            if (move) this.play(move);
-        }, BOT_DELAY_MS);
+            this.play(move);
+        }, wait);
     }
 
     stopBot() {
+        this.botRequest++;
         clearTimeout(this.botTimer);
         this.botTimer = null;
     }
