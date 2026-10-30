@@ -1,6 +1,7 @@
 import {
     WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
 } from './engine.js';
+import { sounds } from './sound.js';
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
@@ -49,9 +50,19 @@ class ChessUI {
     }
 
     play(move) {
+        const isCapture = move.type === 'move' && (move.enPassant || getPiece(this.state, move.to.r, move.to.c) !== null);
         this.history.push(applyMove(this.state, move));
         this.clearSelection();
         this.update();
+        this.playSound(move.type === 'drop' ? 'drop' : isCapture ? 'capture' : 'move');
+    }
+
+    // The move sound, followed by a check or game-end sound when relevant.
+    playSound(kind) {
+        if (!this.soundOn) return;
+        sounds[kind]();
+        if (this.status.result !== 'playing') sounds.gameEnd();
+        else if (this.status.inCheck) sounds.check();
     }
 
     undo() {
@@ -228,25 +239,27 @@ class ChessUI {
     }
 }
 
-// Rule settings are remembered in this browser. Storage can be unavailable
-// (private windows, blocked site data), so failures fall back to the defaults.
+// Preferences are remembered in this browser. Storage can be unavailable
+// (private windows, blocked site data), so failures fall back to defaults.
+function loadStored(key, fallback) {
+    try {
+        const stored = JSON.parse(localStorage.getItem(key));
+        return stored ?? fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function saveStored(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+        // Not remembered, but the change still applies for this visit.
+    }
+}
+
 const SETTINGS_KEY = 'chess-drops-settings';
-
-function loadSettings() {
-    try {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
-    } catch {
-        return { ...DEFAULT_SETTINGS };
-    }
-}
-
-function saveSettings(settings) {
-    try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch {
-        // Not remembered, but the game still uses the new settings.
-    }
-}
+const SOUND_KEY = 'chess-drops-sound';
 
 // Form fields are named after the settings: checkboxes hold booleans, selects hold numbers.
 function bindSettingsForm(form, ui) {
@@ -260,7 +273,7 @@ function bindSettingsForm(form, ui) {
         for (const field of fields) {
             settings[field.name] = field.type === 'checkbox' ? field.checked : Number(field.value);
         }
-        saveSettings(settings);
+        saveStored(SETTINGS_KEY, settings);
         ui.setSettings(settings);
     };
 }
@@ -273,7 +286,7 @@ const ui = new ChessUI({
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
     undo: document.getElementById('undo'),
-}, loadSettings());
+}, { ...DEFAULT_SETTINGS, ...loadStored(SETTINGS_KEY, {}) });
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('undo').onclick = () => ui.undo();
 document.getElementById('flip').onclick = () => ui.flip();
@@ -284,3 +297,13 @@ document.addEventListener('keydown', event => {
     }
 });
 bindSettingsForm(document.getElementById('settings'), ui);
+
+const soundButton = document.getElementById('sound');
+const showSound = () => { soundButton.textContent = ui.soundOn ? 'Sound on' : 'Sound off'; };
+ui.soundOn = loadStored(SOUND_KEY, true);
+showSound();
+soundButton.onclick = () => {
+    ui.soundOn = !ui.soundOn;
+    saveStored(SOUND_KEY, ui.soundOn);
+    showSound();
+};

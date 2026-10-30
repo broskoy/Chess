@@ -83,7 +83,7 @@ A web chess variant where captured pieces can be brought back onto the board (li
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
 - [x] Undo (button and Ctrl+Z)
 - [x] Turn indicator ("stoplight" beside the board; the winner stays lit at game end)
-- [ ] Sounds
+- [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
 - Move notation for drops (e.g. `N@e4`), piece images instead of Unicode
 
 ### Board orientation
@@ -105,7 +105,8 @@ A web chess variant where captured pieces can be brought back onto the board (li
 
 ### Files
 - [src/engine.js](src/engine.js): rules only, no DOM. Runs in the browser and in Node.
-- [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position (for undo and history later).
+- [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position, which undo uses.
+- [src/sound.js](src/sound.js): sound effects generated with the Web Audio API.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design
