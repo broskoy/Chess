@@ -112,6 +112,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+/* Only the turn light has a housing; the player squircles match its width (34 + 2 × 8 + 2 × 2). */
+#turn-light {
     padding: 8px;
     background: #333;
     border: 2px solid #444;
@@ -126,7 +129,8 @@ body {
     box-sizing: border-box;
     border-radius: 32%;   /* squircle-ish */
 }
-.socket { background: #2a2a2a; border: 2px solid #3d3d3d; }
+/* The sockets only reserve the marker's two positions; they're not drawn. */
+.socket { visibility: hidden; }
 #turn-marker {
     position: absolute;
     left: 8px;
@@ -176,8 +180,8 @@ body {
 }
 
 .slot {
-    width: 34px;
-    height: 34px;
+    width: 54px;
+    height: 54px;
     box-sizing: border-box;
     border-radius: 32%;
     display: flex;
@@ -188,14 +192,14 @@ body {
 .material {
     background: #555;
     color: #eee;
-    font-size: 15px;
+    font-size: 20px;
     font-weight: bold;
 }
 .ability.none { display: none; }
 .ability.necromancer {
     background: #9677cf;
     border: 2px solid #6b3fa0;
-    font-size: 24px;
+    font-size: 38px;
 }
 .ability.locked { color: rgba(0, 0, 0, 0); }
 .ability.locked.white-piece { text-shadow: 0 0 0 rgba(255, 255, 255, 0.55), 0 0 2px rgba(0, 0, 0, 0.4); }
