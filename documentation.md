@@ -67,7 +67,7 @@ These carry over from standard chess, with a few deliberate changes.
 - Checkmate still works in practice: every move loses the ruler next turn. Stalemate becomes a loss, since you have to move into capture.
 - Castling still can't start from, pass through or land on an attacked square.
 - The ruler is highlighted when attacked, and a sound plays.
-- Setting `kingCapture` (on by default) switches back to standard check rules.
+- The engine setting `kingCapture` (on, not exposed in the game) switches back to standard check rules. The tests use it.
 
 ### Pawn double step
 - A pawn's double step depends on a per-piece **`hasMoved` flag**, not on its rank. This matters for pieces that come back (resurrected) or change type (converted).
@@ -86,7 +86,7 @@ These carry over from standard chess, with a few deliberate changes.
 ## Open questions (decide through play-testing)
 
 - **Necromancer:**
-  - Does a promoted piece come back as its promoted type, or as a pawn?
+  - A raised piece comes back as the type that died, so a promoted rook rises as a rook. If it should rise as a pawn instead, pieces would need to remember that they were promoted (removed for now, since nothing used it).
   - Can a resurrection capture or give check? (It can't capture, since the square must be empty; giving check is allowed for now.)
 - **Alchemist:** what the right starting budget is; whether the promote-then-upgrade shortcut is too strong.
 - **Rounds:** how many, what changes between them (bot ruler, army budget, bot strength), and what the player keeps between rounds.
@@ -104,7 +104,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Threefold repetition is a draw. A position includes the board (and which pawns can still double step), turn, castling rights, the grave and the Alchemist budgets. The UI checks it over its list of positions; the engine state doesn't keep history, to keep copying cheap for the bot.
 - Skipped for now: the 50-move rule. Probably rare here; add it if play-testing shows games dragging on. If added, conversions shouldn't reset the count (free knight-bishop swaps could stall forever).
 - Not a draw: lone rulers. Wandering around until someone slips up isn't fun, but abilities make "can anyone still win?" hard to decide. Idea for later: a 10-turn limit once both sides are below 5 material.
-- [ ] Move history / simple move list
+- Later: post-game review (step back and forward through a finished game, or a copied one). Every position is already stored, so it's mostly UI.
 
 ### Phase 2 — Rulers framework and the Necromancer
 - [x] Remove drops (engine, hands UI, drop settings)
@@ -112,19 +112,18 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Track the grave: square and dead piece, updated on every capture
 - [x] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
 - [x] Show the grave on the board (purple border, also while a piece stands on it; a faded ghost of the dead piece while it's open, in the color it would rise as and with a pulsing border when you can raise it). Click the open grave to resurrect
-- [x] Choose each side's ruler in the Rules panel (two players on one screen until the bot exists); ruler names shown above and below the board
+- [x] Choose your ruler in the main menu; ruler icons beside the board
 - [x] Tests for grave tracking, blocking, resurrection colors
 
 ### Phase 3 — Alchemist
 - [x] Budget in the game state, conversion moves (`{ type: 'convert', at, into }`)
-- [x] UI: conversion buttons for all five types in the player's row, always visible; greyed out without prices until a piece is selected, then priced and lit up where allowed. Blue budget squircle in the player's row; starting budget in the Rules panel; conversion sound
+- [x] UI: conversion buttons for all five types in the player's row, always visible; greyed out without prices until a piece is selected, then priced and lit up where allowed. Blue budget squircle in the player's row; conversion sound. The starting budget is an engine setting (`alchemistBudget`, default 0), not in the game's UI yet
 - [x] Tests
 
 ### Main menu
 - [x] Ruler cards in playing-card proportions (5:7) with placeholder art: King, Necromancer, Alchemist, and a locked "Coming soon" card
 - [x] Hovering (or keyboard-focusing) a card previews it: the card grows and glows in its ruler's color, and its name fades into "Start as the ...". Clicking a card starts the game. On phones a tap starts directly, since there's no hover
 - [x] The player is white against a plain King for now. Menu button in the game to go back. The name shows "..." while no card is hovered
-- [x] Rules panel stays hidden (rulers are chosen in the menu, not mid-game)
 - [ ] Sound and navigation reachable from every screen (proposal: a corner menu button opening an overlay with Sound, Main menu, Resume; Esc opens it on desktop)
 - [ ] Card artwork
 - Later: Alchemist starting budget, opponent choice, rounds
@@ -135,11 +134,10 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [x] Greedy bot: takes the most valuable capture available (the ruler above all), otherwise a random move
 - [x] Search (alpha-beta with iterative deepening, about 0.8s per move) in a Web Worker so the page doesn't freeze. Evaluation: material, plus small bonuses for central knights/bishops and advanced pawns; capturing the ruler is a win (faster wins preferred). Past the search depth it follows captures until quiet, and responds when its ruler is attacked. Reaches depth 4-5 in the middlegame and about 7 in endgames (200-600k positions/s). Equal moves are picked at random so games vary
   - An Alchemist's unspent points count as one pawn each, since they turn back into material one for one. Leaving them at 0 was a real bug found in play: after the player turned their queen into a rook, the bot saw itself 4 points ahead and let its queen be traded for that rook. The weight can be tuned by self-play
-  - Still unvalued: an open grave's potential
-- [ ] Teach it the rulers. Resurrecting and converting are already moves, so the search sees what they do; what it can't see is *potential* (an open grave, a piece tied to the grave, unspent points). Those values start at 0
+- [ ] Teach it the rest of the rulers' potential. Resurrecting and converting are already moves, so the search sees what they do; what it can't see yet is an open grave's threat (a strong enemy piece waiting, a piece tied to the grave). That value starts at 0
 - [ ] Difficulty levels (how deep it looks)
 
-**Tuning by self-play, not guessing.** Nobody knows yet what an open grave or unspent alchemy points are worth. Instead of guessing, a Node script will play many bot-against-bot games with different values (e.g. grave worth 0 vs 2) and report win rates. The same tool answers balance questions such as how often a Necromancer beats a plain King.
+**Tuning by self-play, not guessing.** Nobody knows yet what an open grave is worth, or whether one pawn per alchemy point is the right weight. Instead of guessing, a Node script will play many bot-against-bot games with different values (e.g. grave worth 0 vs 2) and report win rates. The same tool answers balance questions such as how often a Necromancer beats a plain King.
 
 ### Phase 5 — Rounds and armies
 - [ ] Multiple rounds against the bot with different rulers
@@ -151,7 +149,7 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
 - [x] Icon buttons: house (main menu), circular arrow (restart), curved arrow (undo), speaker (sound; a diagonal line through it when muted). Drawn by hand as inline SVG, so there's no icon license to track
 - Removed the flip board button (not needed once you always play from your own side). The board can still be drawn with black at the bottom, for playing the bot as black later. Auto-flip each turn was tried earlier and felt disorienting.
-- [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser) — now hidden, see Home screen
+- Removed the Rules panel (it changed rules mid-game; the menu picks rulers now). Rule settings aren't saved in the browser anymore, only the sound preference is.
 - [x] No status line: the turn light, the red ruler square and the grave glow already show what it said
 - [x] Board scales with the window (squares 40-80px on wide screens)
 - [x] Phones: below 700px wide, the board and side bar are centered together and the side bar shrinks, so the board fits; the player rows' squircles shrink to stay within the board's width. Taps go through immediately (`touch-action: manipulation` turns off the double-tap-zoom wait)
@@ -186,15 +184,17 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [src/notation.js](src/notation.js): writing games as text (PGN-like) and replaying them.
 - [src/rulers.js](src/rulers.js): each ruler's name, placeholder art and color, shared by the menu and the game.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
+- [test/bot.test.js](test/bot.test.js), [test/notation.test.js](test/notation.test.js): bot behavior, and writing and replaying games.
+- [tools/replay.mjs](tools/replay.mjs): replays a copied game and shows what the bot thinks.
 
 ### Engine design
-- **Game state is one plain object**: board, turn, castling rights, grave, Alchemist budgets, clocks and settings (including each side's ruler). Everything the rules depend on lives there.
+- **Game state is one plain object**: board, turn, castling rights, grave, Alchemist budgets and settings (including each side's ruler). Everything the rules depend on lives there.
 - **Pure functions**: `applyMove(state, move)` returns a new state and never changes the old one. Pieces are never mutated, so copies can share them cheaply.
 - **Abilities are move types**, so the UI, undo and the bot handle them like any other move:
   - Board move: `{ type: 'move', from, to, castle?, promotion? }`
-  - Resurrect: `{ type: 'resurrect' }` (the grave holds the square and piece)
+  - Resurrect: `{ type: 'resurrect', to }` (the grave holds the square and piece)
   - Convert (Alchemist): `{ type: 'convert', at, into }`
-- Legal move generation: generate all moves including abilities, then (in standard-rules mode) drop any that leave your own king in check.
+- Legal move generation: generate all moves including abilities, then (in standard-rules mode) discard any that leave your own king in check.
 - `fromFEN` loads standard FEN positions, mainly for tests.
 
 ### Running
