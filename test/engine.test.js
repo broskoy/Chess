@@ -262,3 +262,76 @@ test('material counts piece values on the board', () => {
     assert.equal(materialOf(state, 'black'), 3);
     assert.equal(materialOf(state, 'white'), 0);
 });
+
+const ALCHEMIST = { whiteRuler: 'alchemist' };
+const converts = state => getLegalMoves(state).filter(m => m.type === 'convert');
+const convertsAt = (state, r, c) => converts(state).filter(m => m.at.r === r && m.at.c === c).map(m => m.into).sort();
+const findConvert = (state, [r, c], into) => converts(state).find(m => m.at.r === r && m.at.c === c && m.into === into);
+
+test('an Alchemist with no points can only downgrade or swap', () => {
+    const state = fromFEN('4k3/8/8/8/3R4/8/8/4K3 w - - 0 1', ALCHEMIST);
+    assert.equal(state.budget.white, 0);
+    assert.deepEqual(convertsAt(state, 4, 3), ['bishop', 'knight', 'pawn']);
+});
+
+test('downgrading earns points and upgrading spends them', () => {
+    let state = fromFEN('4k3/8/8/8/3R4/8/3P4/4K3 w - - 0 1', ALCHEMIST);
+    state = applyMove(state, findConvert(state, [4, 3], 'knight'));   // rook -> knight: +2
+    assert.equal(state.budget.white, 2);
+    assert.deepEqual(state.board[4][3], { type: 'knight', color: 'white', hasMoved: true, promoted: false });
+
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    assert.ok(findConvert(state, [6, 3], 'bishop'), 'pawn -> bishop costs exactly 2');
+    assert.equal(findConvert(state, [6, 3], 'rook'), undefined, 'pawn -> rook costs 4');
+    state = applyMove(state, findConvert(state, [6, 3], 'bishop'));
+    assert.equal(state.budget.white, 0);
+});
+
+test('swapping between equal values is free', () => {
+    const state = fromFEN('4k3/8/8/8/3N4/8/8/4K3 w - - 0 1', ALCHEMIST);
+    const next = applyMove(state, findConvert(state, [4, 3], 'bishop'));
+    assert.equal(next.budget.white, 0);
+    assert.equal(next.board[4][3].type, 'bishop');
+});
+
+test('a queen can be made with enough points', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/3P4/4K3 w - - 0 1', { ...ALCHEMIST, alchemistBudget: 8 });
+    assert.equal(state.budget.white, 8);
+    assert.ok(findConvert(state, [6, 3], 'queen'));
+});
+
+test('the ruler cannot be converted', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { ...ALCHEMIST, alchemistBudget: 20 });
+    assert.equal(converts(state).length, 0);
+});
+
+test('new pawns only in your own half, including the back rank', () => {
+    const state = fromFEN('4k3/1R6/8/8/3R4/8/8/R3K3 w - - 0 1', ALCHEMIST);
+    assert.ok(convertsAt(state, 4, 3).includes('pawn'), 'rank 4');
+    assert.ok(convertsAt(state, 7, 0).includes('pawn'), 'rank 1');
+    assert.ok(!convertsAt(state, 1, 1).includes('pawn'), 'rank 7: would promote right away');
+
+    const black = fromFEN('4k3/8/8/8/8/8/1r6/4K3 b - - 0 1', { blackRuler: 'alchemist' });
+    assert.ok(!convertsAt(black, 6, 1).includes('pawn'), "black's rank 2 is in white's half");
+});
+
+test('a converted pawn has no double step', () => {
+    let state = fromFEN('4k3/8/8/8/8/8/3N4/4K3 w - - 0 1', ALCHEMIST);
+    state = applyMove(state, findConvert(state, [6, 3], 'pawn'));
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    assert.ok(findMove(state, [6, 3], [5, 3]), 'd2-d3');
+    assert.equal(findMove(state, [6, 3], [4, 3]), undefined, 'no d2-d4');
+});
+
+test('converting a rook on its corner ends that castling right', () => {
+    const state = fromFEN('4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1', ALCHEMIST);
+    const next = applyMove(state, findConvert(state, [7, 7], 'knight'));
+    assert.deepEqual(next.castling.white, { kingside: false, queenside: true });
+});
+
+test('only an Alchemist can convert', () => {
+    for (const ruler of ['king', 'necromancer']) {
+        const state = fromFEN('4k3/8/8/8/3R4/8/8/4K3 w - - 0 1', { whiteRuler: ruler });
+        assert.equal(converts(state).length, 0, ruler);
+    }
+});

@@ -11,10 +11,11 @@ export const DEFAULT_SETTINGS = {
     kingCapture: true,       // the king can be captured to win; moves into check are allowed
     whiteRuler: 'king',      // one of RULERS
     blackRuler: 'king',
+    alchemistBudget: 0,      // points an Alchemist starts a new game with
 };
 
 // Each side's king is a ruler. A plain king has no ability.
-export const RULERS = ['king', 'necromancer'];
+export const RULERS = ['king', 'necromancer', 'alchemist'];
 
 export function rulerOf(state, color) {
     return state.settings[`${color}Ruler`];
@@ -33,8 +34,11 @@ const BACK_RANK = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knigh
 export const PROMOTION_TYPES = ['rook'];
 const FEN_TYPES ={ p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 
-// Standard piece values: used for material counts, and later the Alchemist's budget and the bot.
+// Standard piece values: used for material counts, the Alchemist's budget, and later the bot.
 export const PIECE_VALUES = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9, king: 0 };
+
+// Types an Alchemist can convert from and into. The ruler is never converted.
+export const CONVERTIBLE_TYPES = ['pawn', 'knight', 'bishop', 'rook', 'queen'];
 
 export function opponent(color) {
     return color === WHITE ? BLACK : WHITE;
@@ -53,7 +57,7 @@ export function createInitialState(settings = {}) {
         board[7][c] = makePiece(type, WHITE);
     });
 
-    return {
+    const state = {
         board,
         turn: WHITE,
         // Castling is tracked as rights rather than via rook.hasMoved, so a rook
@@ -68,6 +72,10 @@ export function createInitialState(settings = {}) {
         grave: null,
         settings: { ...DEFAULT_SETTINGS, ...settings },
     };
+    // Alchemist points; only used by a side whose ruler is an Alchemist.
+    const budget = state.settings.alchemistBudget;
+    state.budget = { white: budget, black: budget };
+    return state;
 }
 
 // Parses standard FEN (board, turn, castling, clocks). There is no en passant
@@ -113,6 +121,7 @@ export function getPiece(state, r, c) {
 // Moves are plain objects:
 //   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
 //   { type: 'resurrect', to: {r, c} }              Necromancer raises the piece in the grave
+//   { type: 'convert', at: {r, c}, into }           Alchemist turns the piece at `at` into type `into`
 
 function pieceMoves(state, r, c) {
     const piece = state.board[r][c];
@@ -219,6 +228,40 @@ function resurrectMoves(state) {
     return [{ type: 'resurrect', to: { r: grave.r, c: grave.c } }];
 }
 
+// Rows of a side's own half of the board, where an Alchemist may create pawns.
+function inOwnHalf(r, color) {
+    return color === WHITE ? r >= 4 : r <= 3;
+}
+
+// An Alchemist can convert any of their pieces except the ruler into another type.
+// Downgrading earns the difference in value, upgrading costs it, and swapping
+// between equal values is free. New pawns must be in your own half, since a pawn
+// made by alchemy hasn't marched anywhere (this also stops creating pawns that
+// promote straight away, and farming points by downgrading next to promotion).
+function convertMoves(state) {
+    const color = state.turn;
+    if (rulerOf(state, color) !== 'alchemist') return [];
+    const moves = [];
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const piece = state.board[r][c];
+            if (!piece || piece.color !== color || piece.type === 'king') continue;
+            for (const into of CONVERTIBLE_TYPES) {
+                if (into === piece.type) continue;
+                if (conversionCost(piece.type, into) > state.budget[color]) continue;
+                if (into === 'pawn' && !inOwnHalf(r, color)) continue;
+                moves.push({ type: 'convert', at: { r, c }, into });
+            }
+        }
+    }
+    return moves;
+}
+
+// Positive: points spent. Negative: points earned.
+export function conversionCost(fromType, intoType) {
+    return PIECE_VALUES[intoType] - PIECE_VALUES[fromType];
+}
+
 // All moves for the side to move, ignoring whether they leave the king in check.
 function pseudoLegalMoves(state) {
     const moves = [];
@@ -229,6 +272,7 @@ function pseudoLegalMoves(state) {
         }
     }
     moves.push(...resurrectMoves(state));
+    moves.push(...convertMoves(state));
     return moves;
 }
 
@@ -334,6 +378,7 @@ function cloneState(state) {
         ...state,
         board: state.board.map(row => row.slice()),
         castling: { white: { ...state.castling.white }, black: { ...state.castling.black } },
+        budget: { ...state.budget },
     };
 }
 
@@ -343,6 +388,7 @@ export function applyMove(state, move) {
     const next = cloneState(state);
     const color = state.turn;
     if (move.type === 'resurrect') return applyResurrect(next, color);
+    if (move.type === 'convert') return applyConvert(next, move, color);
 
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
@@ -374,6 +420,20 @@ function applyResurrect(next, color) {
     // It counts as moved, so a raised pawn has no double step.
     next.board[r][c] = makePiece(piece.type, color, { hasMoved: true, promoted: piece.promoted });
     next.grave = null;
+    next.halfmoveClock = 0;
+    if (color === BLACK) next.fullmoveNumber++;
+    next.turn = opponent(color);
+    return next;
+}
+
+function applyConvert(next, move, color) {
+    const { at, into } = move;
+    const piece = next.board[at.r][at.c];
+    next.budget[color] -= conversionCost(piece.type, into);
+    // A converted piece counts as moved, so a new pawn has no double step.
+    next.board[at.r][at.c] = makePiece(into, color, { hasMoved: true });
+    // Converting a rook on its corner ends that castling right.
+    updateCastlingRights(next, piece, at, at);
     next.halfmoveClock = 0;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
