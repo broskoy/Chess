@@ -93,3 +93,15 @@ test('the search raises a valuable piece from the grave when it can', () => {
     state.grave = { r: 4, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true, promoted: false } };
     assert.equal(searchMove(state, FAST).type, 'resurrect');
 });
+
+test("the bot counts an Alchemist's points, so a downgrade doesn't fool it", () => {
+    // White just turned the d4 queen into a rook, banking 4 points. The rook attacks
+    // the black queen on d6. Unvalued points made "rook takes queen, pawn takes rook"
+    // look as good as retreating, so the bot let its queen go.
+    const state = fromFEN('rnb1kbnr/ppp2ppp/3q4/8/3R4/4P3/PPP2PPP/RNB1KBNR b KQkq - 0 6', { whiteRuler: 'alchemist' });
+    state.budget.white = 4;
+    for (let i = 0; i < 5; i++) {
+        const move = searchMove(state, FAST);
+        assert.deepEqual([move.from.r, move.from.c], [2, 3], `the queen should move, not ${JSON.stringify(move)}`);
+    }
+});

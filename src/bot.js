@@ -1,7 +1,7 @@
 // The computer opponent. It only uses the engine (no DOM), so it also runs in
 // Node, e.g. for bot-against-bot games to tune it later.
 
-import { getLegalMoves, getPiece, applyMove, isInCheck, PIECE_VALUES } from './engine.js';
+import { getLegalMoves, getPiece, applyMove, isInCheck, rulerOf, opponent, PIECE_VALUES } from './engine.js';
 
 // `random` returns a number in [0, 1); it can be replaced to make choices repeatable in tests.
 function pick(moves, random) {
@@ -43,11 +43,22 @@ const WIN = 1_000_000;           // capturing the ruler; reduced by the ply, so 
 const MAX_CAPTURE_DEPTH = 6;     // how far the capture follow-up goes past the search depth
 const TIMEOUT = Symbol('timeout');
 
+// An Alchemist's unspent point is worth one pawn: points turn back into material one
+// for one (4 points buy back a rook-to-queen upgrade). Without this the bot read a
+// downgrade as lost material, and e.g. let its queen be traded for a rook after the
+// opponent turned their queen into that rook. Can be tuned by self-play later.
+const POINT_VALUE = 100;
+
 // Scores are in hundredths of a pawn, from the point of view of the side to move.
-// Material, plus small bonuses for central knights and bishops and advanced pawns.
-// Ruler abilities' potential (an open grave, unspent points) isn't valued yet.
+// Material and Alchemist points, plus small bonuses for central knights and bishops
+// and advanced pawns. The potential of an open grave isn't valued yet.
 function evaluate(state) {
     let score = 0;
+    for (const color of [state.turn, opponent(state.turn)]) {
+        if (rulerOf(state, color) !== 'alchemist') continue;
+        const points = POINT_VALUE * state.budget[color];
+        score += color === state.turn ? points : -points;
+    }
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
             const piece = state.board[r][c];

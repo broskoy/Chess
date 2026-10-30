@@ -134,7 +134,8 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [x] Random bot: plays black (a plain King) and picks any legal move after a short pause. Undo takes back both its reply and your move
 - [x] Greedy bot: takes the most valuable capture available (the ruler above all), otherwise a random move
 - [x] Search (alpha-beta with iterative deepening, about 0.8s per move) in a Web Worker so the page doesn't freeze. Evaluation: material, plus small bonuses for central knights/bishops and advanced pawns; capturing the ruler is a win (faster wins preferred). Past the search depth it follows captures until quiet, and responds when its ruler is attacked. Reaches depth 4-5 in the middlegame and about 7 in endgames (200-600k positions/s). Equal moves are picked at random so games vary
-  - Known gap: unspent alchemy points are worth 0, so an Alchemist bot would spend them as soon as an upgrade looks good. To be tuned by self-play
+  - An Alchemist's unspent points count as one pawn each, since they turn back into material one for one. Leaving them at 0 was a real bug found in play: after the player turned their queen into a rook, the bot saw itself 4 points ahead and let its queen be traded for that rook. The weight can be tuned by self-play
+  - Still unvalued: an open grave's potential
 - [ ] Teach it the rulers. Resurrecting and converting are already moves, so the search sees what they do; what it can't see is *potential* (an open grave, a piece tied to the grave, unspent points). Those values start at 0
 - [ ] Difficulty levels (how deep it looks)
 
