@@ -1,11 +1,15 @@
 import {
-    WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
+    WHITE, BLACK, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
     isThreefoldRepetition,
     rulerOf, materialOf, CONVERTIBLE_TYPES, conversionCost,
 } from './engine.js';
 import { sounds } from './sound.js';
 import { setupMenu } from './menu.js';
 import { RULER_INFO } from './rulers.js';
+import { chooseMove } from './bot.js';
+
+// A short pause before the bot moves, so its move doesn't appear instantly.
+const BOT_DELAY_MS = 500;
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
@@ -20,6 +24,8 @@ class ChessUI {
         this.elements = elements;
         this.settings = settings;
         this.bottomColor = WHITE;   // which side is drawn at the bottom of the screen
+        this.botColor = BLACK;      // the side the bot plays, or null for two players on one screen
+        this.botTimer = null;
         this.newGame();
     }
 
@@ -39,11 +45,28 @@ class ChessUI {
         this.update();
     }
 
-    // A new game as white (at the bottom) against the given settings' rulers.
+    // A new game as white (at the bottom) against the bot as black.
     startGame(settings) {
         this.settings = settings;
         this.bottomColor = WHITE;
+        this.botColor = BLACK;
         this.newGame();
+    }
+
+    // Lets the bot move after a short pause when it's its turn.
+    scheduleBotMove() {
+        this.stopBot();
+        if (this.status.result !== 'playing' || this.state.turn !== this.botColor) return;
+        this.botTimer = setTimeout(() => {
+            this.botTimer = null;
+            const move = chooseMove(this.state);
+            if (move) this.play(move);
+        }, BOT_DELAY_MS);
+    }
+
+    stopBot() {
+        clearTimeout(this.botTimer);
+        this.botTimer = null;
     }
 
     get state() {
@@ -58,6 +81,7 @@ class ChessUI {
             this.status = { result: 'repetition', winner: null, inCheck: this.status.inCheck };
         }
         this.render();
+        this.scheduleBotMove();
     }
 
     play(move) {
@@ -78,10 +102,17 @@ class ChessUI {
         else if (this.status.inCheck) sounds.check();
     }
 
+    // Takes back the last move, and against the bot keeps going back until it's
+    // the player's turn again (so both the bot's reply and your move are undone).
     undo() {
         if (this.history.length === 1) return;
+        this.stopBot();
         this.history.pop();
         this.moves.pop();
+        while (this.history.length > 1 && this.state.turn === this.botColor) {
+            this.history.pop();
+            this.moves.pop();
+        }
         // Keep the current rules even if they changed after this position was played.
         this.history[this.history.length - 1] = { ...this.state, settings: this.settings };
         this.clearSelection();
@@ -100,7 +131,7 @@ class ChessUI {
     }
 
     handleTileClick(r, c) {
-        if (this.status.result !== 'playing') return;
+        if (this.status.result !== 'playing' || this.state.turn === this.botColor) return;
         const square = { r, c };
         // Clicking the board while choosing a promotion cancels it.
         this.promotionChoices = null;
@@ -258,7 +289,7 @@ class ChessUI {
         element.title = blocked ? `Grave: ${type}, blocked` : `Grave: ${type}, ready to raise`;
 
         const raise = this.resurrectMove();
-        if (raise && color === this.state.turn && this.status.result === 'playing') {
+        if (raise && color === this.state.turn && color !== this.botColor && this.status.result === 'playing') {
             element.classList.add('clickable');
             element.onclick = () => this.play(raise);
         }
@@ -430,7 +461,10 @@ setupMenu({
         showScreen(gameScreen);
     },
 });
-document.getElementById('to-menu').onclick = () => showScreen(menuScreen);
+document.getElementById('to-menu').onclick = () => {
+    ui.stopBot();
+    showScreen(menuScreen);
+};
 showScreen(menuScreen);
 
 // The speaker icon gets a diagonal line through it while muted.

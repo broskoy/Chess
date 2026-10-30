@@ -130,10 +130,14 @@ These carry over from standard chess, with a few deliberate changes.
 - Later: Alchemist starting budget, opponent choice, rounds
 
 ### Phase 4 — Bot
-- [ ] Alpha-beta search a few moves deep with a material-based evaluation, running in the browser
-- [ ] Understand ruler abilities (they're just extra move types for the search; evaluation may need hints, e.g. the value of an open grave or of unspent budget)
-- [ ] Run the search in a Web Worker so the page doesn't freeze while the bot thinks
-- [ ] Mode choice: vs bot (pick your color and ruler) or two players on one screen (kept for testing)
+Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only uses the engine, so it also runs in Node.
+- [x] Random bot: plays black (a plain King) and picks any legal move after a short pause. Undo takes back both its reply and your move
+- [ ] Greedy bot: takes the best capture available
+- [ ] Search a few moves deep (alpha-beta) with a material-based evaluation, in a Web Worker so the page doesn't freeze
+- [ ] Teach it the rulers. Resurrecting and converting are already moves, so the search sees what they do; what it can't see is *potential* (an open grave, a piece tied to the grave, unspent points). Those values start at 0
+- [ ] Difficulty levels (how deep it looks)
+
+**Tuning by self-play, not guessing.** Nobody knows yet what an open grave or unspent alchemy points are worth. Instead of guessing, a Node script will play many bot-against-bot games with different values (e.g. grave worth 0 vs 2) and report win rates. The same tool answers balance questions such as how often a Necromancer beats a plain King.
 
 ### Phase 5 — Rounds and armies
 - [ ] Multiple rounds against the bot with different rulers
@@ -174,6 +178,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position, which undo uses.
 - [src/sound.js](src/sound.js): sound effects generated with the Web Audio API.
 - [src/menu.js](src/menu.js): the main menu (ruler cards and start text).
+- [src/bot.js](src/bot.js): the computer opponent.
+- [src/rulers.js](src/rulers.js): each ruler's name, placeholder art and color, shared by the menu and the game.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design
