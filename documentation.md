@@ -32,7 +32,15 @@ The first version let you drop captured pieces back onto the board (like shogi /
   - **Bait:** while the opponent's queen is in the grave, a greedy capture by the Necromancer replaces it with a lesser piece. The Necromancer must weigh the material in front of them against the piece they could raise.
   - The Necromancer's own trades close the grave, so trading has a hidden cost for them.
   - With two Necromancers, only the side that did the killing can raise the piece.
-- Probably weak as-is. A possible buff after play-testing: **two graves** holding the last two deaths (but that also makes removing a strong piece for good harder). Worth checking in endgames, where it may be stronger than expected.
+- **The real value is the lock, not the material** (found in play-testing):
+  - A grave holding a strong enemy piece is a standing threat. An opponent's piece on the grave is effectively **pinned** there: if it moves, the dead piece rises.
+  - The Necromancer's own piece on the grave becomes a **trigger**: it can step off with a threat of its own (attack, check), leaving the opponent two problems at once, like a discovered attack.
+  - Ways out exist (replace the grave with another capture, cover the square, step off when the raise wouldn't hurt), but each costs a move or a commitment.
+  - So the Necromancer converts material into **time and tension**. It's stronger in slow positions than in races, which fits its defensive identity.
+  - It gets **stronger later in the game**: with fewer pieces left, locking one of two major pieces stings more. A full test game was close.
+  - No cheesy tactics found so far, and positions are harder to calculate for both sides, in a good way.
+- Possible buff: **two graves** holding the last two deaths. Probably unnecessary, and two locked squares may tie down too much of the board; also makes removing a strong piece for good harder.
+- For the bot: an evaluation that only counts material will misjudge the Necromancer. It needs to value a strong enemy piece in a grave that can open, and treat a piece standing on that grave as less free than it looks.
 
 ### Alchemist (planned, rules still open)
 - Converts one of their pieces into another type, spending the turn.
