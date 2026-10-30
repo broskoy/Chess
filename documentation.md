@@ -128,6 +128,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
 - [x] Resurrect sound
 - [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
+- [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork
 
 ### Not planned
@@ -139,6 +140,7 @@ These carry over from standard chess, with a few deliberate changes.
 - **Rules engine written from scratch** (no chess.js), so new rules and abilities are easy to add.
 
 ### Files
+- [guide.md](guide.md): the player guide (rules and tips per ruler) for people new to the game. Keep it updated as rules change and as play-testing turns up new tips. Could later be shown in the game behind a booklet icon.
 - [src/engine.js](src/engine.js): rules only, no DOM. Runs in the browser and in Node.
 - [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position, which undo uses.
 - [src/sound.js](src/sound.js): sound effects generated with the Web Audio API.
