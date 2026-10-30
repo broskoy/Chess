@@ -120,10 +120,14 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] UI: selecting an Alchemist's piece shows a "Convert to:" row with prices; blue budget squircle in the side bar; starting budget in the Rules panel; conversion sound
 - [x] Tests
 
-### Home screen
-- [ ] Choose rulers (and the Alchemist's starting budget) on a home screen before a game, instead of changing rules mid-game
-- [x] Rules panel hidden in the meantime (the rulers saved in the browser stay in effect)
-- Later: mode choice (vs bot / two players), rounds
+### Main menu
+- [x] Ruler cards in playing-card proportions (5:7) with placeholder art: King, Necromancer, Alchemist, and a locked "Coming soon" card. Cards lift and light up in the ruler's color on hover
+- [x] "Start as the ___": hovering a card fades in its name; clicking a card selects it; clicking the text starts. Two steps because phones have no hover, so a tap only selects
+- [x] The player is white against a plain King for now. Menu button in the game to go back; the last ruler is pre-selected
+- [x] Rules panel stays hidden (rulers are chosen in the menu, not mid-game)
+- [ ] Sound and navigation reachable from every screen (proposal: a corner menu button opening an overlay with Sound, Main menu, Resume; Esc opens it on desktop)
+- [ ] Card artwork
+- Later: Alchemist starting budget, opponent choice, rounds
 
 ### Phase 4 — Bot
 - [ ] Alpha-beta search a few moves deep with a material-based evaluation, running in the browser
@@ -167,6 +171,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [src/engine.js](src/engine.js): rules only, no DOM. Runs in the browser and in Node.
 - [src/ui.js](src/ui.js): rendering and input. Keeps a list of every position, which undo uses.
 - [src/sound.js](src/sound.js): sound effects generated with the Web Audio API.
+- [src/menu.js](src/menu.js): the main menu (ruler cards and start text).
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design

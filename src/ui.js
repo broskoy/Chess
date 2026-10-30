@@ -4,6 +4,7 @@ import {
     rulerOf, materialOf, CONVERTIBLE_TYPES, conversionCost,
 } from './engine.js';
 import { sounds } from './sound.js';
+import { setupMenu } from './menu.js';
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
@@ -37,6 +38,13 @@ class ChessUI {
         this.history[this.history.length - 1] = { ...this.state, settings };
         this.clearSelection();
         this.update();
+    }
+
+    // A new game as white (at the bottom) against the given settings' rulers.
+    startGame(settings) {
+        this.settings = settings;
+        this.bottomColor = WHITE;
+        this.newGame();
     }
 
     flip() {
@@ -399,12 +407,37 @@ document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('undo').onclick = () => ui.undo();
 document.getElementById('flip').onclick = () => ui.flip();
 document.addEventListener('keydown', event => {
+    if (gameScreen.hidden) return;
     if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
         event.preventDefault();
         ui.undo();
     }
 });
 bindSettingsForm(document.getElementById('settings'), ui);
+
+// Screens: the main menu, and the game itself.
+const menuScreen = document.getElementById('menu');
+const gameScreen = document.getElementById('game');
+function showScreen(screen) {
+    menuScreen.hidden = screen !== menuScreen;
+    gameScreen.hidden = screen !== gameScreen;
+}
+
+// For now the player is always white, against a plain King.
+setupMenu({
+    cardsElement: document.getElementById('ruler-cards'),
+    startButton: document.getElementById('start-game'),
+    startName: document.getElementById('start-name'),
+    initialRuler: ui.settings.whiteRuler,
+    onStart(ruler) {
+        const settings = { ...ui.settings, whiteRuler: ruler, blackRuler: 'king' };
+        saveStored(SETTINGS_KEY, settings);
+        ui.startGame(settings);
+        showScreen(gameScreen);
+    },
+});
+document.getElementById('to-menu').onclick = () => showScreen(menuScreen);
+showScreen(menuScreen);
 
 const soundButton = document.getElementById('sound');
 const showSound = () => { soundButton.textContent = ui.soundOn ? 'Sound on' : 'Sound off'; };

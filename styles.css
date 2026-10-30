@@ -23,11 +23,12 @@
         --tile: clamp(28px, min(calc((100vh - 250px) / 8),
             calc((100vw - 24px - 10px - var(--bar-gap) - var(--slot)) / 8)), 80px);
     }
-    /* The extra right padding shifts everything left by half the side bar's width. */
     body {
         box-sizing: border-box;
-        padding: 0 calc(12px + var(--bar-gap) + var(--slot)) 0 12px;
+        padding: 0 12px;
     }
+    /* The extra right padding shifts the game left by half the side bar's width. */
+    #game { padding-right: calc(var(--bar-gap) + var(--slot)); }
     #controls { flex-wrap: wrap; justify-content: center; }
     #controls button { padding: 8px 12px; font-size: 15px; }
 }
@@ -51,6 +52,9 @@ body {
     margin: 0;
     font-family: sans-serif;
 }
+
+#game { display: flex; flex-direction: column; align-items: center; }
+#game[hidden], #menu[hidden] { display: none; }
 
 #board {
     display: grid;
@@ -77,7 +81,7 @@ body {
 
 /* Tints the square's own color, so light and dark squares stay distinguishable */
 .last-move { background-image: linear-gradient(rgba(246, 246, 105, 0.45), rgba(246, 246, 105, 0.45)); }
-.selected { background-color: rgba(255, 255, 0, 0.5) !important; }
+.tile.selected { background-color: rgba(255, 255, 0, 0.5) !important; }
 .in-check { background-color: #e05a4f !important; }
 
 .highlight { position: relative; }
@@ -278,4 +282,73 @@ body {
     font-weight: bold;
     color: #2a5ca6;
     text-shadow: none;
+}
+
+/* Main menu: a row of ruler cards (playing-card proportions) and the start text */
+#menu {
+    --card-width: clamp(120px, 17vw, 200px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+}
+#ruler-cards {
+    display: grid;
+    grid-template-columns: repeat(4, var(--card-width));
+    gap: 24px;
+}
+@media (max-width: 700px) {
+    #menu { --card-width: min(40vw, 170px); gap: 32px; }
+    #ruler-cards { grid-template-columns: repeat(2, var(--card-width)); gap: 16px; }
+}
+.ruler-card {
+    width: var(--card-width);
+    aspect-ratio: 5 / 7;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18% 8% 12%;
+    background: #2d2d2d;
+    border: 2px solid #444;
+    border-radius: 12px;
+    color: #eee;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-art { font-size: calc(var(--card-width) * 0.42); color: var(--accent); line-height: 1; }
+.card-name { font-size: calc(var(--card-width) * 0.1); }
+/* Only devices with a real pointer get hover effects; on phones they would stick after a tap. */
+@media (hover: hover) {
+    .ruler-card:not(.locked):hover {
+        transform: translateY(-8px);
+        border-color: var(--accent);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+    }
+}
+.ruler-card.selected {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45), 0 0 16px var(--accent);
+}
+.ruler-card.locked { opacity: 0.4; cursor: default; }
+
+#start-game {
+    background: none;
+    border: none;
+    color: #ddd;
+    font-family: inherit;
+    font-size: clamp(22px, 3vw, 32px);
+    cursor: pointer;
+}
+#start-game:disabled { color: #777; cursor: default; }
+#start-name {
+    color: var(--accent, inherit);
+    transition: opacity 0.15s ease;
+}
+#start-name.fading { opacity: 0; }
+@media (hover: hover) {
+    #start-game:not(:disabled):hover #start-name { text-decoration: underline; }
 }

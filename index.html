@@ -7,37 +7,46 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="ruler-top" class="ruler-label"></div>
-    <div id="board-area">
-        <div id="board"></div>
-        <div id="side-bar">
-            <div class="side-card">
-                <span id="material-top" class="slot material"></span>
-                <span id="ability-top" class="slot ability"></span>
-            </div>
-            <div id="turn-light" title="Side to move">
-                <span class="socket"></span>
-                <span class="socket"></span>
-                <span id="turn-marker"></span>
-            </div>
-            <div class="side-card">
-                <span id="ability-bottom" class="slot ability"></span>
-                <span id="material-bottom" class="slot material"></span>
+    <section id="menu">
+        <div id="ruler-cards"></div>
+        <button id="start-game">Start as the <span id="start-name">___</span></button>
+    </section>
+
+    <section id="game" hidden>
+        <div id="ruler-top" class="ruler-label"></div>
+        <div id="board-area">
+            <div id="board"></div>
+            <div id="side-bar">
+                <div class="side-card">
+                    <span id="material-top" class="slot material"></span>
+                    <span id="ability-top" class="slot ability"></span>
+                </div>
+                <div id="turn-light" title="Side to move">
+                    <span class="socket"></span>
+                    <span class="socket"></span>
+                    <span id="turn-marker"></span>
+                </div>
+                <div class="side-card">
+                    <span id="ability-bottom" class="slot ability"></span>
+                    <span id="material-bottom" class="slot material"></span>
+                </div>
             </div>
         </div>
-    </div>
-    <div id="ruler-bottom" class="ruler-label"></div>
-    <!-- Always keeps its height, so showing a row of choices doesn't move anything -->
-    <div id="choices">
-        <div id="promotion" hidden></div>
-        <div id="convert" hidden></div>
-    </div>
-    <div id="controls">
-        <button id="restart">New game</button>
-        <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
-        <button id="flip">Flip board</button>
-        <button id="sound"></button>
-    </div>
+        <div id="ruler-bottom" class="ruler-label"></div>
+        <!-- Always keeps its height, so showing a row of choices doesn't move anything -->
+        <div id="choices">
+            <div id="promotion" hidden></div>
+            <div id="convert" hidden></div>
+        </div>
+        <div id="controls">
+            <button id="to-menu">Menu</button>
+            <button id="restart">New game</button>
+            <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+            <button id="flip">Flip board</button>
+            <button id="sound"></button>
+        </div>
+    </section>
+
     <!-- Hidden until rulers are chosen on a home screen instead of mid-game -->
     <details id="rules" hidden>
         <summary>Rules</summary>
