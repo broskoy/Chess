@@ -5,6 +5,14 @@
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
 }
 
+/* Phones wait ~300ms after a tap to see if it's a double-tap zoom before sending the
+   click. The page doesn't use double-tap zoom, so let taps through immediately, and
+   skip the gray flash phones draw over tapped elements. */
+html {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
     background-color: #222;
     color: white;
