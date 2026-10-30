@@ -40,14 +40,6 @@ class ChessUI {
         this.update();
     }
 
-    // Rule changes apply to the game in progress, so variants can be compared mid-game.
-    setSettings(settings) {
-        this.settings = settings;
-        this.history[this.history.length - 1] = { ...this.state, settings };
-        this.clearSelection();
-        this.update();
-    }
-
     // A new game as white (at the bottom) against the bot as black.
     startGame(settings) {
         this.settings = settings;
@@ -125,8 +117,6 @@ class ChessUI {
             this.history.pop();
             this.moves.pop();
         }
-        // Keep the current rules even if they changed after this position was played.
-        this.history[this.history.length - 1] = { ...this.state, settings: this.settings };
         this.clearSelection();
         this.update();
     }
@@ -397,37 +387,7 @@ function saveStored(key, value) {
     }
 }
 
-const SETTINGS_KEY = 'chess-settings';
 const SOUND_KEY = 'chess-sound';
-
-// Only known settings are kept, so stale ones from older versions are ignored.
-function loadSettings() {
-    const stored = loadStored(SETTINGS_KEY, {});
-    const settings = { ...DEFAULT_SETTINGS };
-    for (const key of Object.keys(DEFAULT_SETTINGS)) {
-        if (typeof stored[key] === typeof DEFAULT_SETTINGS[key]) settings[key] = stored[key];
-    }
-    return settings;
-}
-
-// Form fields are named after the settings: checkboxes hold booleans, selects hold
-// strings, or numbers when marked with data-number.
-function bindSettingsForm(form, ui) {
-    const fields = [...form.elements].filter(field => field.name);
-    for (const field of fields) {
-        if (field.type === 'checkbox') field.checked = ui.settings[field.name];
-        else field.value = ui.settings[field.name];
-    }
-    form.onchange = () => {
-        const settings = {};
-        for (const field of fields) {
-            if (field.type === 'checkbox') settings[field.name] = field.checked;
-            else settings[field.name] = 'number' in field.dataset ? Number(field.value) : field.value;
-        }
-        saveStored(SETTINGS_KEY, settings);
-        ui.setSettings(settings);
-    };
-}
 
 const ui = new ChessUI({
     board: document.getElementById('board'),
@@ -441,7 +401,7 @@ const ui = new ChessUI({
     promotion: document.getElementById('promotion'),
     convert: document.getElementById('convert'),
     undo: document.getElementById('undo'),
-}, loadSettings());
+}, DEFAULT_SETTINGS);
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('undo').onclick = () => ui.undo();
 document.addEventListener('keydown', event => {
@@ -451,7 +411,6 @@ document.addEventListener('keydown', event => {
         ui.undo();
     }
 });
-bindSettingsForm(document.getElementById('settings'), ui);
 
 // Screens: the main menu, and the game itself.
 const menuScreen = document.getElementById('menu');
@@ -467,9 +426,7 @@ setupMenu({
     startText: document.getElementById('start-text'),
     startName: document.getElementById('start-name'),
     onStart(ruler) {
-        const settings = { ...ui.settings, whiteRuler: ruler, blackRuler: 'king' };
-        saveStored(SETTINGS_KEY, settings);
-        ui.startGame(settings);
+        ui.startGame({ ...DEFAULT_SETTINGS, whiteRuler: ruler, blackRuler: 'king' });
         showScreen(gameScreen);
     },
 });

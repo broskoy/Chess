@@ -72,37 +72,6 @@
         </div>
     </section>
 
-    <!-- Hidden until rulers are chosen on a home screen instead of mid-game -->
-    <details id="rules" hidden>
-        <summary>Rules</summary>
-        <form id="settings">
-            <label>White ruler
-                <select name="whiteRuler">
-                    <option value="king">King</option>
-                    <option value="necromancer">Necromancer</option>
-                    <option value="alchemist">Alchemist</option>
-                </select>
-            </label>
-            <label>Black ruler
-                <select name="blackRuler">
-                    <option value="king">King</option>
-                    <option value="necromancer">Necromancer</option>
-                    <option value="alchemist">Alchemist</option>
-                </select>
-            </label>
-            <label>Alchemist starting budget (new games)
-                <select name="alchemistBudget" data-number>
-                    <option value="0">0</option>
-                    <option value="3">3</option>
-                    <option value="5">5</option>
-                    <option value="8">8</option>
-                    <option value="12">12</option>
-                </select>
-            </label>
-            <label><input type="checkbox" name="kingCapture"> King capture (off: standard checkmate)</label>
-        </form>
-    </details>
-
     <script type="module" src="src/ui.js"></script>
 </body>
 </html>

@@ -179,22 +179,6 @@ body {
 #sound.muted .sound-off { display: inline; }
 #sound.muted .sound-on { display: none; }
 
-#rules {
-    width: var(--board-width);
-    margin-top: 12px;
-    color: #ccc;
-    font-size: 14px;
-}
-#rules summary { cursor: pointer; }
-#settings {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
-}
-#settings select { margin-left: 6px; }
-
-
 /* Side bar beside the board, positioned so the board itself stays centered (on wide screens).
    It spans the board's height: 4 game buttons at the top, the turn light in the middle,
    and 4 slots for items at the bottom. */
