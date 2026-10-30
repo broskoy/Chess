@@ -57,11 +57,6 @@ export const sounds = {
         knock({ frequency: 550, duration: 0.12, volume: 1.6 });
         knock({ frequency: 1100, duration: 0.06, volume: 0.8, delay: 0.05 });
     },
-    // Two light taps: the piece is placed rather than slid.
-    drop() {
-        knock({ frequency: 1500, duration: 0.05, volume: 0.7 });
-        knock({ frequency: 1000, duration: 0.07, volume: 1.0, delay: 0.07 });
-    },
     check() {
         tone({ frequency: 880, duration: 0.18, volume: 0.12, delay: 0.08, type: 'triangle' });
     },

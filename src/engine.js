@@ -8,10 +8,6 @@ export const WHITE = 'white';
 export const BLACK = 'black';
 
 export const DEFAULT_SETTINGS = {
-    dropZoneDepth: 4,        // ranks from your own side where drops are allowed (0 = no drops)
-    dropCooldown: 1,         // board moves required after a drop before dropping again
-    allowDropChecks: true,
-    demotePromoted: false,   // captured promoted pieces go to hand as pawns
     kingCapture: true,       // the king can be captured to win; moves into check are allowed
 };
 
@@ -36,10 +32,6 @@ function makePiece(type, color, extra = {}) {
     return { type, color, hasMoved: false, promoted: false, ...extra };
 }
 
-function emptyHand() {
-    return { pawn: 0, knight: 0, bishop: 0, rook: 0, queen: 0 };
-}
-
 export function createInitialState(settings = {}) {
     const board = Array.from({ length: 8 }, () => Array(8).fill(null));
     BACK_RANK.forEach((type, c) => {
@@ -53,13 +45,11 @@ export function createInitialState(settings = {}) {
         board,
         turn: WHITE,
         // Castling is tracked as rights rather than via rook.hasMoved, so a rook
-        // dropped onto a1/h1 can never castle.
+        // that arrives on a1/h1 some other way can never castle.
         castling: {
             white: { kingside: true, queenside: true },
             black: { kingside: true, queenside: true },
         },
-        hands: { white: emptyHand(), black: emptyHand() },
-        dropCooldown: { white: 0, black: 0 },
         halfmoveClock: 0,
         fullmoveNumber: 1,
         settings: { ...DEFAULT_SETTINGS, ...settings },
@@ -67,7 +57,7 @@ export function createInitialState(settings = {}) {
 }
 
 // Parses standard FEN (board, turn, castling, clocks). There is no en passant
-// in this game, so that field is ignored. Hands start empty.
+// in this game, so that field is ignored.
 export function fromFEN(fen, settings = {}) {
     const [placement, turn = 'w', castling = '-', , half = '0', full = '1'] = fen.trim().split(/\s+/);
     const state = createInitialState(settings);
@@ -108,7 +98,6 @@ export function getPiece(state, r, c) {
 //
 // Moves are plain objects:
 //   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
-//   { type: 'drop', piece, to: {r, c} }            piece is a type name, e.g. 'knight'
 
 function pieceMoves(state, r, c) {
     const piece = state.board[r][c];
@@ -134,7 +123,7 @@ function pieceMoves(state, r, c) {
 
         if (isEmpty(r + dir, c)) {
             addPawn(r + dir, c);
-            // Double step depends on the piece, not its rank, so dropped pawns get it too.
+            // Double step depends on the piece's hasMoved flag, not its rank.
             if (!piece.hasMoved && isEmpty(r + 2 * dir, c)) addPawn(r + 2 * dir, c);
         }
         for (const dc of [-1, 1]) {
@@ -203,31 +192,6 @@ function castlingMoves(state, color) {
     return moves;
 }
 
-// Drops from the hand onto empty squares in the drop zone, unless on cooldown.
-function dropMoves(state) {
-    const color = state.turn;
-    if (state.dropCooldown[color] > 0) return [];
-
-    // Drop zone rows, counted from this side's back rank.
-    const zoneRows = Array.from({ length: state.settings.dropZoneDepth }, (_, i) => color === WHITE ? 7 - i : i);
-    const moves = [];
-    for (const [type, count] of Object.entries(state.hands[color])) {
-        if (count === 0) continue;
-        for (const r of zoneRows) {
-            // A pawn on either back rank could never move (or would skip promotion).
-            if (type === 'pawn' && (r === 0 || r === 7)) continue;
-            for (let c = 0; c < 8; c++) {
-                if (state.board[r][c] === null) moves.push({ type: 'drop', piece: type, to: { r, c } });
-            }
-        }
-    }
-
-    if (!state.settings.allowDropChecks) {
-        return moves.filter(move => !isInCheck(applyMove(state, move), opponent(color)));
-    }
-    return moves;
-}
-
 // All moves for the side to move, ignoring whether they leave the king in check.
 function pseudoLegalMoves(state) {
     const moves = [];
@@ -237,7 +201,6 @@ function pseudoLegalMoves(state) {
             if (piece && piece.color === state.turn) moves.push(...pieceMoves(state, r, c));
         }
     }
-    moves.push(...dropMoves(state));
     return moves;
 }
 
@@ -333,8 +296,6 @@ function cloneState(state) {
         ...state,
         board: state.board.map(row => row.slice()),
         castling: { white: { ...state.castling.white }, black: { ...state.castling.black } },
-        hands: { white: { ...state.hands.white }, black: { ...state.hands.black } },
-        dropCooldown: { ...state.dropCooldown },
     };
 }
 
@@ -343,16 +304,9 @@ function cloneState(state) {
 export function applyMove(state, move) {
     const next = cloneState(state);
     const color = state.turn;
-    if (move.type === 'drop') return applyDrop(next, move, color);
-
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
     const captured = next.board[to.r][to.c];
-
-    if (captured && captured.type !== 'king') {
-        const type = captured.promoted && next.settings.demotePromoted ? 'pawn' : captured.type;
-        next.hands[color][type]++;
-    }
 
     next.board[to.r][to.c] = move.promotion
         ? makePiece(move.promotion, piece.color, { hasMoved: true, promoted: true })
@@ -367,19 +321,6 @@ export function applyMove(state, move) {
 
     updateCastlingRights(next, piece, from, to);
     next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
-    next.dropCooldown[color] = Math.max(0, next.dropCooldown[color] - 1);
-    if (color === BLACK) next.fullmoveNumber++;
-    next.turn = opponent(color);
-    return next;
-}
-
-// `next` is already a copy of the state, so it can be changed in place.
-function applyDrop(next, move, color) {
-    // Dropped pieces count as unmoved, so a dropped pawn can double step.
-    next.board[move.to.r][move.to.c] = makePiece(move.piece, color);
-    next.hands[color][move.piece]--;
-    next.dropCooldown[color] = next.settings.dropCooldown;
-    next.halfmoveClock++;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;

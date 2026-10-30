@@ -85,7 +85,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [ ] Move history / simple move list
 
 ### Phase 2 — Rulers framework and the Necromancer
-- [ ] Remove drops (engine, hands UI, drop settings)
+- [x] Remove drops (engine, hands UI, drop settings)
 - [ ] Each side has a ruler type in the game state (plain king, Necromancer, later Alchemist)
 - [ ] Track the grave: square and dead piece, updated on every capture
 - [ ] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer

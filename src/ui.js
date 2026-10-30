@@ -54,7 +54,7 @@ class ChessUI {
         this.history.push(applyMove(this.state, move));
         this.clearSelection();
         this.update();
-        this.playSound(move.type === 'drop' ? 'drop' : isCapture ? 'capture' : 'move');
+        this.playSound(isCapture ? 'capture' : 'move');
     }
 
     // The move sound, followed by a check or game-end sound when relevant.
@@ -76,15 +76,11 @@ class ChessUI {
 
     clearSelection() {
         this.selected = null;           // board square of the selected piece
-        this.selectedDrop = null;       // piece type selected in the hand
         this.promotionChoices = null;   // promotion moves waiting for the player to pick a piece
     }
 
-    // Moves available for whatever is selected: a piece on the board or a piece in hand.
+    // Moves available for the selected piece.
     selectedMoves() {
-        if (this.selectedDrop) {
-            return this.legalMoves.filter(m => m.type === 'drop' && m.piece === this.selectedDrop);
-        }
         if (!this.selected) return [];
         return this.legalMoves.filter(m => m.type === 'move' && sameSquare(m.from, this.selected));
     }
@@ -119,18 +115,8 @@ class ChessUI {
         this.render();
     }
 
-    handleHandClick(color, type) {
-        if (this.status.result !== 'playing' || color !== this.state.turn) return;
-        const wasSelected = this.selectedDrop === type;
-        this.clearSelection();
-        if (!wasSelected) this.selectedDrop = type;
-        this.render();
-    }
-
     render() {
         this.renderBoard();
-        this.renderHand(this.elements.handTop, opponent(this.bottomColor));
-        this.renderHand(this.elements.handBottom, this.bottomColor);
         this.renderTurnLight();
         this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
@@ -165,37 +151,6 @@ class ChessUI {
                 tile.onclick = () => this.handleTileClick(r, c);
                 board.appendChild(tile);
             }
-        }
-    }
-
-    renderHand(element, color) {
-        element.innerHTML = '';
-        const isTurn = color === this.state.turn && this.status.result === 'playing';
-        const counts = Object.entries(this.state.hands[color]).filter(([, count]) => count > 0);
-
-        for (const [type, count] of counts) {
-            const button = document.createElement('button');
-            button.className = `hand-piece ${color}-piece`;
-            button.title = type;
-            button.textContent = SYMBOLS[`${color}-${type}`];
-            if (count > 1) {
-                const badge = document.createElement('span');
-                badge.className = 'count';
-                badge.textContent = count;
-                button.appendChild(badge);
-            }
-            if (isTurn && this.selectedDrop === type) button.classList.add('selected');
-            const canDrop = isTurn && this.legalMoves.some(m => m.type === 'drop' && m.piece === type);
-            button.disabled = !canDrop;
-            button.onclick = () => this.handleHandClick(color, type);
-            element.appendChild(button);
-        }
-
-        if (isTurn && counts.length > 0 && this.state.dropCooldown[color] > 0) {
-            const note = document.createElement('span');
-            note.className = 'hand-note';
-            note.textContent = 'You dropped last turn: make a board move first.';
-            element.appendChild(note);
         }
     }
 
@@ -258,8 +213,8 @@ function saveStored(key, value) {
     }
 }
 
-const SETTINGS_KEY = 'chess-drops-settings';
-const SOUND_KEY = 'chess-drops-sound';
+const SETTINGS_KEY = 'chess-settings';
+const SOUND_KEY = 'chess-sound';
 
 // Form fields are named after the settings: checkboxes hold booleans, selects hold numbers.
 function bindSettingsForm(form, ui) {
@@ -281,8 +236,6 @@ function bindSettingsForm(form, ui) {
 const ui = new ChessUI({
     board: document.getElementById('board'),
     turnLight: document.getElementById('turn-light'),
-    handTop: document.getElementById('hand-top'),
-    handBottom: document.getElementById('hand-bottom'),
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
     undo: document.getElementById('undo'),
