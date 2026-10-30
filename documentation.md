@@ -200,3 +200,4 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 ### Running
 - Game: `npm run serve`, then open http://localhost:8000. ES modules don't load from `file://`, so opening index.html directly won't work. The server ([serve.py](serve.py)) disables browser caching so edits show up on a normal reload.
 - Tests: `npm test`.
+- Replaying a copied game: save it to a file, then `npm run replay -- game.txt [half-moves]`. Shows the position (rulers, grave, points), the move the bot would play and how deep it searched, and every legal move with its score ([tools/replay.mjs](tools/replay.mjs)).

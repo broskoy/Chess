@@ -198,6 +198,19 @@ export function searchMove(state, { timeLimitMs = 800, maxDepth = 12, random = M
     return best;
 }
 
+// For debugging: every legal move with its score at a fixed depth, best first.
+// Unlike the real search, each move gets an exact score (no cut-offs between them).
+export function scoreMoves(state, depth = 3) {
+    const context = { nodes: 0, deadline: Infinity };
+    const scored = getLegalMoves(state).map(move => ({
+        move,
+        score: capturesRuler(state, move)
+            ? WIN
+            : -negamax(applyMove(state, move), depth - 1, -Infinity, Infinity, 1, context),
+    }));
+    return scored.sort((a, b) => b.score - a.score);
+}
+
 export function chooseMove(state, options) {
     return searchMove(state, options);
 }
