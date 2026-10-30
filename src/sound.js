@@ -33,13 +33,14 @@ function knock({ frequency, duration, volume, delay = 0 }) {
     source.start(ctx.currentTime + delay);
 }
 
-// A pure tone that fades out.
-function tone({ frequency, duration, volume, delay = 0, type = 'sine' }) {
+// A pure tone that fades out, optionally sliding to another pitch.
+function tone({ frequency, duration, volume, delay = 0, type = 'sine', slideTo = null }) {
     const ctx = audio();
     const start = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
     oscillator.type = type;
-    oscillator.frequency.value = frequency;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    if (slideTo) oscillator.frequency.exponentialRampToValueAtTime(slideTo, start + duration);
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(volume, start);
     gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
@@ -56,6 +57,11 @@ export const sounds = {
     capture() {
         knock({ frequency: 550, duration: 0.12, volume: 1.6 });
         knock({ frequency: 1100, duration: 0.06, volume: 0.8, delay: 0.05 });
+    },
+    // A low knock and a rising tone: something climbs out of the grave.
+    resurrect() {
+        knock({ frequency: 250, duration: 0.15, volume: 1.6 });
+        tone({ frequency: 110, duration: 0.6, volume: 0.18, delay: 0.05, type: 'triangle', slideTo: 330 });
     },
     check() {
         tone({ frequency: 880, duration: 0.18, volume: 0.12, delay: 0.08, type: 'triangle' });

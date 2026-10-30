@@ -89,8 +89,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Each side has a ruler type (settings `whiteRuler` / `blackRuler`: plain king, Necromancer, later Alchemist)
 - [x] Track the grave: square and dead piece, updated on every capture
 - [x] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
-- [ ] Show the grave on the board (marker plus the dead piece), and a way to choose "resurrect" in the UI
-- [ ] Choose each side's ruler for testing (two players on one screen until the bot exists)
+- [x] Show the grave on the board (skull marker; a faded ghost of the dead piece while it's open, pulsing when you can raise it). Click the open grave to resurrect
+- [x] Choose each side's ruler in the Rules panel (two players on one screen until the bot exists); ruler names shown above and below the board
 - [x] Tests for grave tracking, blocking, resurrection colors
 
 ### Phase 3 — Alchemist
@@ -113,7 +113,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
 - [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
-- Later: piece images instead of Unicode, ruler artwork, a resurrect sound
+- [x] Resurrect sound
+- Later: piece images instead of Unicode, ruler artwork
 
 ### Not planned
 - **Online multiplayer.** There's no server, and the game is designed around the bot.

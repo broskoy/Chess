@@ -1,5 +1,6 @@
 import {
     WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
+    rulerOf,
 } from './engine.js';
 import { sounds } from './sound.js';
 
@@ -8,7 +9,10 @@ const SYMBOLS = {
     'black-king': '♚', 'black-queen': '♛', 'black-rook': '♜', 'black-bishop': '♝', 'black-knight': '♞', 'black-pawn': '♟',
 };
 
+const RULER_NAMES = { king: 'King', necromancer: 'Necromancer' };
+
 const sameSquare = (a, b) => a !== null && b !== null && a.r === b.r && a.c === b.c;
+const capitalize = s => s[0].toUpperCase() + s.slice(1);
 
 class ChessUI {
     constructor(elements, settings) {
@@ -54,7 +58,7 @@ class ChessUI {
         this.history.push(applyMove(this.state, move));
         this.clearSelection();
         this.update();
-        this.playSound(isCapture ? 'capture' : 'move');
+        this.playSound(move.type === 'resurrect' ? 'resurrect' : isCapture ? 'capture' : 'move');
     }
 
     // The move sound, followed by a check or game-end sound when relevant.
@@ -109,14 +113,27 @@ class ChessUI {
             return;
         }
 
+        // Clicking the open grave raises its piece (a selected piece's move there takes priority).
+        const resurrect = this.resurrectMove();
+        if (resurrect && sameSquare(resurrect.to, square)) {
+            this.play(resurrect);
+            return;
+        }
+
         const piece = getPiece(this.state, r, c);
         this.clearSelection();
         if (piece && piece.color === this.state.turn) this.selected = square;
         this.render();
     }
 
+    resurrectMove() {
+        return this.legalMoves.find(m => m.type === 'resurrect') ?? null;
+    }
+
     render() {
         this.renderBoard();
+        this.renderRulerLabel(this.elements.rulerTop, opponent(this.bottomColor));
+        this.renderRulerLabel(this.elements.rulerBottom, this.bottomColor);
         this.renderTurnLight();
         this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
@@ -128,6 +145,8 @@ class ChessUI {
         board.innerHTML = '';
         const targets = this.selectedMoves().map(m => m.to);
         const checkedKing = this.status.inCheck ? findKing(this.state, this.state.turn) : null;
+        const { grave } = this.state;
+        const canRaise = this.resurrectMove() !== null && this.status.result === 'playing';
 
         // With black at the bottom the board is rotated 180°, so both rows and columns reverse.
         const flipped = this.bottomColor !== WHITE;
@@ -147,11 +166,30 @@ class ChessUI {
                 if (sameSquare(this.selected, square)) tile.classList.add('selected');
                 if (sameSquare(checkedKing, square)) tile.classList.add('in-check');
                 if (targets.some(t => sameSquare(t, square))) tile.classList.add('highlight');
+                if (sameSquare(grave, square)) this.decorateGrave(tile, piece, canRaise);
+                if (piece && piece.type === 'king') tile.classList.add(`ruler-${rulerOf(this.state, piece.color)}`);
 
                 tile.onclick = () => this.handleTileClick(r, c);
                 board.appendChild(tile);
             }
         }
+    }
+
+    // The grave is marked with a skull. While it's open, a faded ghost shows the piece that would rise.
+    decorateGrave(tile, piece, canRaise) {
+        tile.classList.add('grave');
+        if (piece) return;
+        const dead = this.state.grave.piece;
+        tile.textContent = SYMBOLS[`${dead.color}-${dead.type}`];
+        tile.classList.add('ghost', `${dead.color}-piece`);
+        if (canRaise) {
+            tile.classList.add('can-raise');
+            tile.title = `Raise the ${dead.type}`;
+        }
+    }
+
+    renderRulerLabel(element, color) {
+        element.textContent = `${capitalize(color)}: ${RULER_NAMES[rulerOf(this.state, color)]}`;
     }
 
     // Two lights matching the board orientation: the side to move is lit,
@@ -184,13 +222,13 @@ class ChessUI {
 
     statusText() {
         const { result, winner, inCheck } = this.status;
-        const capitalize = s => s[0].toUpperCase() + s.slice(1);
         if (this.promotionChoices) return 'Promote to:';
         if (result === 'king-captured') return `${capitalize(winner)} captured the king and wins.`;
         if (result === 'no-moves') return `${capitalize(opponent(winner))} has no moves. ${capitalize(winner)} wins.`;
         if (result === 'checkmate') return `Checkmate. ${capitalize(winner)} wins.`;
         if (result === 'stalemate') return 'Stalemate. Draw.';
-        return `${capitalize(this.state.turn)} to move${inCheck ? ' (check)' : ''}.`;
+        const raise = this.resurrectMove() ? ' Click the grave to raise its piece.' : '';
+        return `${capitalize(this.state.turn)} to move${inCheck ? ' (check)' : ''}.${raise}`;
     }
 }
 
@@ -216,7 +254,17 @@ function saveStored(key, value) {
 const SETTINGS_KEY = 'chess-settings';
 const SOUND_KEY = 'chess-sound';
 
-// Form fields are named after the settings: checkboxes hold booleans, selects hold numbers.
+// Only known settings are kept, so stale ones from older versions are ignored.
+function loadSettings() {
+    const stored = loadStored(SETTINGS_KEY, {});
+    const settings = { ...DEFAULT_SETTINGS };
+    for (const key of Object.keys(DEFAULT_SETTINGS)) {
+        if (typeof stored[key] === typeof DEFAULT_SETTINGS[key]) settings[key] = stored[key];
+    }
+    return settings;
+}
+
+// Form fields are named after the settings: checkboxes hold booleans, selects hold strings.
 function bindSettingsForm(form, ui) {
     const fields = [...form.elements].filter(field => field.name);
     for (const field of fields) {
@@ -226,7 +274,7 @@ function bindSettingsForm(form, ui) {
     form.onchange = () => {
         const settings = {};
         for (const field of fields) {
-            settings[field.name] = field.type === 'checkbox' ? field.checked : Number(field.value);
+            settings[field.name] = field.type === 'checkbox' ? field.checked : field.value;
         }
         saveStored(SETTINGS_KEY, settings);
         ui.setSettings(settings);
@@ -236,10 +284,12 @@ function bindSettingsForm(form, ui) {
 const ui = new ChessUI({
     board: document.getElementById('board'),
     turnLight: document.getElementById('turn-light'),
+    rulerTop: document.getElementById('ruler-top'),
+    rulerBottom: document.getElementById('ruler-bottom'),
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
     undo: document.getElementById('undo'),
-}, { ...DEFAULT_SETTINGS, ...loadStored(SETTINGS_KEY, {}) });
+}, loadSettings());
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('undo').onclick = () => ui.undo();
 document.getElementById('flip').onclick = () => ui.flip();
