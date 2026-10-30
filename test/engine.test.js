@@ -165,12 +165,13 @@ test('only the most recent death is in the grave', () => {
 });
 
 test('the grave is blocked until the capturer moves away', () => {
-    let state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', { blackRuler: 'necromancer' });
+    let state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', NECRO);
     state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5, bishop stands on the grave
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     assert.equal(resurrect(state), undefined);
 
-    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // bishop steps off
+    state = applyMove(state, findMove(state, [0, 3], [0, 2]));
     assert.deepEqual(resurrect(state), { type: 'resurrect', to: { r: 3, c: 3 } });
 });
 
@@ -182,46 +183,65 @@ test('only a Necromancer can resurrect', () => {
     assert.equal(resurrect(state), undefined, 'black has a plain king');
 });
 
-test('a raised piece joins the Necromancer, whichever side it died for', () => {
-    // White's knight dies on d4; white's Necromancer raises it as white.
-    let own = fromFEN('4k3/8/8/2b5/3N4/8/8/4K3 b - - 0 1', NECRO);
-    own = applyMove(own, findMove(own, [3, 2], [4, 3]));  // Bxd4
-    own = applyMove(own, findMove(own, [7, 4], [7, 3]));
-    own = applyMove(own, findMove(own, [4, 3], [5, 4]));  // bishop steps off
-    own = applyMove(own, resurrect(own));
-    assert.deepEqual(own.board[4][3], { type: 'knight', color: 'white', hasMoved: true, promoted: false });
-    assert.equal(own.grave, null);
-    assert.equal(own.turn, 'black');
-
+test('a Necromancer raises an enemy piece in their own color', () => {
     // Black's knight dies on d5 to a white piece; white raises it as white.
-    let enemy = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', NECRO);
-    enemy = applyMove(enemy, findMove(enemy, [5, 1], [3, 3]));  // Bxd5
-    enemy = applyMove(enemy, findMove(enemy, [0, 4], [0, 3]));
-    enemy = applyMove(enemy, findMove(enemy, [3, 3], [2, 4]));  // bishop steps off
-    enemy = applyMove(enemy, findMove(enemy, [0, 3], [0, 2]));
-    enemy = applyMove(enemy, resurrect(enemy));
-    assert.equal(enemy.board[3][3].color, 'white');
+    let state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', NECRO);
+    state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // bishop steps off
+    state = applyMove(state, findMove(state, [0, 3], [0, 2]));
+    state = applyMove(state, resurrect(state));
+    assert.deepEqual(state.board[3][3], { type: 'knight', color: 'white', hasMoved: true, promoted: false });
+    assert.equal(state.grave, null);
+    assert.equal(state.turn, 'black');
+});
+
+test('a Necromancer cannot raise their own dead', () => {
+    // White's knight dies on d4; the grave holds it, but white can't raise it.
+    let state = fromFEN('4k3/8/8/2b5/3N4/8/8/4K3 b - - 0 1', NECRO);
+    state = applyMove(state, findMove(state, [3, 2], [4, 3]));  // Bxd4
+    state = applyMove(state, findMove(state, [7, 4], [7, 3]));
+    state = applyMove(state, findMove(state, [4, 3], [5, 4]));  // bishop steps off
+    assert.equal(state.grave.piece.color, 'white');
+    assert.equal(resurrect(state), undefined);
+});
+
+test('a new death replaces a grave the Necromancer wanted', () => {
+    // White's Necromancer wins a knight, but black takes a white pawn before it can rise.
+    let state = fromFEN('4k2r/8/8/3n4/8/1B6/7P/4K3 w - - 0 1', NECRO);
+    state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
+    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
+    state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // bishop steps off
+    assert.equal(state.grave.piece.type, 'knight');
+    state = applyMove(state, findMove(state, [0, 7], [6, 7]));  // ...Rxh2: the grave now holds a white pawn
+    state = applyMove(state, findMove(state, [7, 4], [7, 3]));
+    state = applyMove(state, findMove(state, [6, 7], [5, 7]));  // rook steps off
+    assert.equal(state.grave.piece.color, 'white');
+    assert.equal(resurrect(state), undefined);
 });
 
 test('a raised pawn has no double step', () => {
-    let state = fromFEN('4k3/8/8/8/8/2b5/3P4/4K3 b - - 0 1', NECRO);
-    state = applyMove(state, findMove(state, [5, 2], [6, 3]));  // Bxd2
-    state = applyMove(state, findMove(state, [7, 4], [7, 5]));
-    state = applyMove(state, findMove(state, [6, 3], [5, 4]));  // bishop steps off
-    state = applyMove(state, resurrect(state));
+    // A black pawn dies on d4 and rises as a white pawn that has already moved.
+    let state = fromFEN('4k3/8/8/8/3p4/2B5/8/4K3 w - - 0 1', NECRO);
+    state = applyMove(state, findMove(state, [5, 2], [4, 3]));  // Bxd4
     state = applyMove(state, findMove(state, [0, 4], [0, 3]));
-    assert.ok(findMove(state, [6, 3], [5, 3]), 'd2-d3');
-    assert.equal(findMove(state, [6, 3], [4, 3]), undefined, 'no d2-d4');
+    state = applyMove(state, findMove(state, [4, 3], [3, 4]));  // bishop steps off to e5
+    state = applyMove(state, findMove(state, [0, 3], [0, 2]));
+    state = applyMove(state, resurrect(state));
+    state = applyMove(state, findMove(state, [0, 2], [0, 1]));
+    assert.ok(findMove(state, [4, 3], [3, 3]), 'd4-d5');
+    assert.equal(findMove(state, [4, 3], [2, 3]), undefined, 'no d4-d6');
 });
 
-test('two Necromancers share one grave', () => {
-    // Whoever moves first after the grave opens can take it.
+test('with two Necromancers, only the side that did the killing can raise', () => {
     let state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', { whiteRuler: 'necromancer', blackRuler: 'necromancer' });
     state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
     state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // white steps off, black moves next
+    assert.equal(resurrect(state), undefined, 'black cannot raise its own knight');
+    state = applyMove(state, findMove(state, [0, 3], [0, 2]));
     state = applyMove(state, resurrect(state));
-    assert.equal(state.board[3][3].color, 'black');
+    assert.equal(state.board[3][3].color, 'white');
 });
 
 test('under standard rules, a resurrection can block check', () => {

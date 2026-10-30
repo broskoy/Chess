@@ -19,15 +19,20 @@ The first version let you drop captured pieces back onto the board (like shogi /
 ### Necromancer
 - There is **one grave** on the board: the square where the **most recent piece died**, from either side.
 - The grave holds that piece. A new death anywhere replaces the grave.
-- **Resurrect:** the Necromancer spends their turn to raise the piece in the grave, on the grave's square. It comes back **in the Necromancer's color**, whichever side it died for.
+- **Resurrect:** the Necromancer spends their turn to raise the piece in the grave, on the grave's square, **in the Necromancer's color**.
+- **Only enemy pieces can be raised.** When one of the Necromancer's own pieces dies, the grave holds it and is useless to them until the next death.
+  - Why: raising your own pieces rewarded throwing strong pieces into danger, and reviving your own bishop with check felt more annoying than interesting. The Necromancer should grow by winning the opponent's pieces.
 - A raised piece counts as already moved, so a raised pawn has **no double step**.
 - The grave square must be **empty**. Right after a capture, the capturing piece stands on the grave and blocks it. The grave opens only once that piece moves away. This keeps the ability tame for now.
 - Range: anywhere on the board (the grave's location is the only constraint).
 - **Tactics this creates:**
   - The capturer can stay on the grave to block it, or step off and allow a resurrection.
   - The grave is usually on a contested square, so a raised piece may be captured again straight away. Keeping a threat on the grave is a defence.
-  - With two Necromancers, they share the one grave. Whoever moves first after it opens gets it, so stepping off a grave hands the opponent the first chance.
-- Possible nerfs after play-testing: only raise your own pieces, or only the opponent's.
+  - **Grave denial:** if the Necromancer just won a strong piece, the opponent can capture any Necromancer piece (even a pawn) to replace the grave with something the Necromancer can't raise.
+  - **Bait:** while the opponent's queen is in the grave, a greedy capture by the Necromancer replaces it with a lesser piece. The Necromancer must weigh the material in front of them against the piece they could raise.
+  - The Necromancer's own trades close the grave, so trading has a hidden cost for them.
+  - With two Necromancers, only the side that did the killing can raise the piece.
+- Probably weak as-is. A possible buff after play-testing: **two graves** holding the last two deaths (but that also makes removing a strong piece for good harder). Worth checking in endgames, where it may be stronger than expected.
 
 ### Alchemist (planned, rules still open)
 - Converts one of their pieces into another type, spending the turn.

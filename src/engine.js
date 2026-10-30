@@ -204,11 +204,14 @@ function castlingMoves(state, color) {
     return moves;
 }
 
-// A Necromancer can raise the piece in the grave, but only once nothing stands on it.
-// Right after a capture the capturing piece is on the grave, so it starts blocked.
+// A Necromancer can raise the piece in the grave if it was an enemy piece,
+// and only once nothing stands on it. Right after a capture the capturing
+// piece is on the grave, so it starts blocked. When one of the Necromancer's
+// own pieces dies, the grave holds it and can't be used until the next death.
 function resurrectMoves(state) {
     const { grave } = state;
     if (rulerOf(state, state.turn) !== 'necromancer' || grave === null) return [];
+    if (grave.piece.color === state.turn) return [];
     if (state.board[grave.r][grave.c] !== null) return [];
     return [{ type: 'resurrect', to: { r: grave.r, c: grave.c } }];
 }
@@ -354,7 +357,7 @@ export function applyMove(state, move) {
 // `next` is already a copy of the state, so it can be changed in place.
 function applyResurrect(next, color) {
     const { r, c, piece } = next.grave;
-    // The raised piece joins the Necromancer's side, whoever it died for.
+    // The raised enemy piece joins the Necromancer's side.
     // It counts as moved, so a raised pawn has no double step.
     next.board[r][c] = makePiece(piece.type, color, { hasMoved: true, promoted: piece.promoted });
     next.grave = null;
