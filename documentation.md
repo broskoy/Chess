@@ -101,7 +101,9 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Removed en passant
 - [x] Per-piece `hasMoved` flag; castling rights tracking
 - [x] Game-over message, restart, undo
-- [ ] Draw rules: threefold repetition, 50-move rule, insufficient material (lower priority)
+- [x] Threefold repetition is a draw. A position includes the board (and which pawns can still double step), turn, castling rights, the grave and the Alchemist budgets. The UI checks it over its list of positions; the engine state doesn't keep history, to keep copying cheap for the bot.
+- Skipped for now: the 50-move rule. Probably rare here; add it if play-testing shows games dragging on. If added, conversions shouldn't reset the count (free knight-bishop swaps could stall forever).
+- Not a draw: lone rulers. Wandering around until someone slips up isn't fun, but abilities make "can anyone still win?" hard to decide. Idea for later: a 10-turn limit once both sides are below 5 material.
 - [ ] Move history / simple move list
 
 ### Phase 2 — Rulers framework and the Necromancer

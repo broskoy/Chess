@@ -1,5 +1,6 @@
 import {
     WHITE, DEFAULT_SETTINGS, createInitialState, getLegalMoves, getStatus, applyMove, getPiece, findKing, opponent,
+    isThreefoldRepetition,
     rulerOf, materialOf, CONVERTIBLE_TYPES, conversionCost,
 } from './engine.js';
 import { sounds } from './sound.js';
@@ -51,6 +52,9 @@ class ChessUI {
     update() {
         this.legalMoves = getLegalMoves(this.state);
         this.status = getStatus(this.state, this.legalMoves);
+        if (this.status.result === 'playing' && isThreefoldRepetition(this.history)) {
+            this.status = { result: 'repetition', winner: null, inCheck: this.status.inCheck };
+        }
         this.render();
     }
 

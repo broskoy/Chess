@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createInitialState, fromFEN, getLegalMoves, getStatus, applyMove, materialOf } from '../src/engine.js';
+import {
+    createInitialState, fromFEN, getLegalMoves, getStatus, applyMove, materialOf, positionKey, isThreefoldRepetition,
+} from '../src/engine.js';
 
 // Standard chess rules, where moves into check are illegal.
 const STANDARD = { kingCapture: false };
@@ -334,4 +336,40 @@ test('only an Alchemist can convert', () => {
         const state = fromFEN('4k3/8/8/8/3R4/8/8/4K3 w - - 0 1', { whiteRuler: ruler });
         assert.equal(converts(state).length, 0, ruler);
     }
+});
+
+// Plays knight moves out and back, returning every state along the way.
+function shuffleKnights(state, times) {
+    const history = [state];
+    const route = [[[7, 6], [5, 5]], [[0, 6], [2, 5]], [[5, 5], [7, 6]], [[2, 5], [0, 6]]];
+    for (let i = 0; i < times; i++) {
+        for (const [from, to] of route) {
+            history.push(applyMove(history[history.length - 1], findMove(history[history.length - 1], from, to)));
+        }
+    }
+    return history;
+}
+
+test('the same position three times is a draw', () => {
+    const history = shuffleKnights(createInitialState(), 1);
+    assert.equal(isThreefoldRepetition(history), false, 'start position seen twice');
+    const longer = shuffleKnights(createInitialState(), 2);
+    assert.equal(isThreefoldRepetition(longer), true, 'start position seen three times');
+});
+
+test('positions that look alike but differ in the grave or budget are not repeats', () => {
+    const a = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    const b = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+    b.grave = { r: 3, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true, promoted: false } };
+    assert.notEqual(positionKey(a), positionKey(b));
+
+    const c = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { alchemistBudget: 3 });
+    assert.notEqual(positionKey(a), positionKey(c));
+});
+
+test('a pawn that can still double step makes a different position', () => {
+    const a = fromFEN('4k3/8/8/8/8/8/3P4/4K3 w - - 0 1');
+    const b = fromFEN('4k3/8/8/8/8/8/3P4/4K3 w - - 0 1');
+    b.board[6][3] = { ...b.board[6][3], hasMoved: true };
+    assert.notEqual(positionKey(a), positionKey(b));
 });

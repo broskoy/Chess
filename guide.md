@@ -6,6 +6,7 @@ Chess, but each side's king is a **ruler** with a special power. If you know che
 
 - **Capture the ruler to win.** There's no checkmate. You're allowed to leave your ruler in danger, but if the opponent captures it, you lose. When your ruler is attacked, its square turns red and a warning sound plays.
 - **No safe moves left?** If every move you have puts your ruler in danger, you still have to pick one. Running out of safe moves (a stalemate in normal chess) is a loss.
+- **Draws:** the same position three times is a draw. The turn light then parks in the middle in gray.
 - **Pawns promote to a rook**, not a queen.
 - **No en passant.** Pawns can only capture diagonally onto the square where the enemy piece stands.
 - **Castling** works as usual. Your ruler can't castle out of, through, or into an attacked square.

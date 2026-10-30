@@ -369,6 +369,34 @@ export function getStatus(state, legalMoves = getLegalMoves(state)) {
         : { result: 'stalemate', winner: null, inCheck };
 }
 
+// --- Repetition ---------------------------------------------------------------
+//
+// The state doesn't keep the game's history (copying it on every move would slow
+// down searching), so repetition is checked over a list of states kept by the caller.
+
+// Everything that decides which moves are possible, as a string: the board
+// (including whether each pawn may still double step), turn, castling rights,
+// the grave and the Alchemist budgets. Two states with the same key are the same position.
+export function positionKey(state) {
+    const squares = state.board.flat().map(p => {
+        if (p === null) return '.';
+        const letter = p.type === 'knight' ? 'n' : p.type[0];
+        const symbol = p.color === WHITE ? letter.toUpperCase() : letter;
+        return p.type === 'pawn' && !p.hasMoved ? symbol + '*' : symbol;
+    });
+    const { castling, grave, budget } = state;
+    const rights = [castling.white.kingside, castling.white.queenside, castling.black.kingside, castling.black.queenside]
+        .map(Number).join('');
+    const graveKey = grave ? `${grave.r}${grave.c}${grave.piece.color[0]}${grave.piece.type}` : '-';
+    return [squares.join(''), state.turn, rights, graveKey, budget.white, budget.black].join(' ');
+}
+
+// True when the last state in `history` has occurred at least three times.
+export function isThreefoldRepetition(history) {
+    const key = positionKey(history[history.length - 1]);
+    return history.filter(state => positionKey(state) === key).length >= 3;
+}
+
 // --- Applying moves ------------------------------------------------------------
 
 // Pieces are never mutated (applyMove replaces them), so a copy can share them.
