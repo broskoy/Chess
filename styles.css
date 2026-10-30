@@ -65,7 +65,14 @@ body {
 }
 #controls button:hover { background: #555; }
 
-#promotion { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #ccc; }
+/* Room for one row of choices (promotion or conversion), reserved even when empty */
+#choices {
+    min-height: 60px;
+    margin: 6px 0 10px;
+    display: flex;
+    align-items: center;
+}
+#promotion { display: flex; align-items: center; gap: 6px; color: #ccc; }
 #promotion[hidden] { display: none; }
 #promotion button {
     width: 60px;
@@ -217,7 +224,7 @@ body {
 .ruler-alchemist { text-shadow: 0 0 6px #4a9bff, 0 0 2px #000; }
 
 /* Conversion choices under the board, each with its price in points */
-#convert { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #ccc; }
+#convert { display: flex; align-items: center; gap: 6px; color: #ccc; }
 #convert[hidden] { display: none; }
 .choice-label { margin-right: 4px; font-size: 14px; }
 .convert-choice {

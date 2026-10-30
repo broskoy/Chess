@@ -27,8 +27,11 @@
         </div>
     </div>
     <div id="ruler-bottom" class="ruler-label"></div>
-    <div id="promotion" hidden></div>
-    <div id="convert" hidden></div>
+    <!-- Always keeps its height, so showing a row of choices doesn't move anything -->
+    <div id="choices">
+        <div id="promotion" hidden></div>
+        <div id="convert" hidden></div>
+    </div>
     <div id="controls">
         <button id="restart">New game</button>
         <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
