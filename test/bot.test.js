@@ -22,10 +22,12 @@ test('two bots can play a whole game without errors', () => {
     let seed = 1;
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     let state = createInitialState({ whiteRuler: 'necromancer', blackRuler: 'alchemist' });
-    for (let ply = 0; ply < 300 && getStatus(state).result === 'playing'; ply++) {
+    let plies = 0;
+    while (plies < 300 && getStatus(state).result === 'playing') {
         state = applyMove(state, randomMove(state, random));
+        plies++;
     }
-    assert.ok(state.fullmoveNumber > 1);
+    assert.ok(plies > 2);
 });
 
 test('the greedy bot takes the most valuable piece, and the ruler above all', () => {
@@ -90,7 +92,7 @@ test('the search finds a checkmate under standard rules', () => {
 
 test('the search raises a valuable piece from the grave when it can', () => {
     const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { whiteRuler: 'necromancer' });
-    state.grave = { r: 4, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true, promoted: false } };
+    state.grave = { r: 4, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
     assert.equal(searchMove(state, FAST).type, 'resurrect');
 });
 

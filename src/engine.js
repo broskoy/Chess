@@ -45,7 +45,7 @@ export function opponent(color) {
 }
 
 function makePiece(type, color, extra = {}) {
-    return { type, color, hasMoved: false, promoted: false, ...extra };
+    return { type, color, hasMoved: false, ...extra };
 }
 
 export function createInitialState(settings = {}) {
@@ -66,8 +66,6 @@ export function createInitialState(settings = {}) {
             white: { kingside: true, queenside: true },
             black: { kingside: true, queenside: true },
         },
-        halfmoveClock: 0,
-        fullmoveNumber: 1,
         // Where the most recent piece died: { r, c, piece }. A Necromancer can raise it.
         grave: null,
         settings: { ...DEFAULT_SETTINGS, ...settings },
@@ -78,10 +76,10 @@ export function createInitialState(settings = {}) {
     return state;
 }
 
-// Parses standard FEN (board, turn, castling, clocks). There is no en passant
-// in this game, so that field is ignored.
+// Parses standard FEN: board, turn and castling rights. The en passant and
+// move-count fields are ignored, since this game has neither.
 export function fromFEN(fen, settings = {}) {
-    const [placement, turn = 'w', castling = '-', , half = '0', full = '1'] = fen.trim().split(/\s+/);
+    const [placement, turn = 'w', castling = '-'] = fen.trim().split(/\s+/);
     const state = createInitialState(settings);
 
     state.board = placement.split('/').map((row, r) => {
@@ -103,8 +101,6 @@ export function fromFEN(fen, settings = {}) {
         white: { kingside: castling.includes('K'), queenside: castling.includes('Q') },
         black: { kingside: castling.includes('k'), queenside: castling.includes('q') },
     };
-    state.halfmoveClock = Number(half);
-    state.fullmoveNumber = Number(full);
     return state;
 }
 
@@ -424,7 +420,7 @@ export function applyMove(state, move) {
     if (captured && captured.type !== 'king') next.grave = { r: to.r, c: to.c, piece: captured };
 
     next.board[to.r][to.c] = move.promotion
-        ? makePiece(move.promotion, piece.color, { hasMoved: true, promoted: true })
+        ? makePiece(move.promotion, piece.color, { hasMoved: true })
         : { ...piece, hasMoved: true };
     next.board[from.r][from.c] = null;
 
@@ -435,8 +431,6 @@ export function applyMove(state, move) {
     }
 
     updateCastlingRights(next, piece, from, to);
-    next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
-    if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;
 }
@@ -446,10 +440,8 @@ function applyResurrect(next, color) {
     const { r, c, piece } = next.grave;
     // The raised enemy piece joins the Necromancer's side.
     // It counts as moved, so a raised pawn has no double step.
-    next.board[r][c] = makePiece(piece.type, color, { hasMoved: true, promoted: piece.promoted });
+    next.board[r][c] = makePiece(piece.type, color, { hasMoved: true });
     next.grave = null;
-    next.halfmoveClock = 0;
-    if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;
 }
@@ -462,8 +454,6 @@ function applyConvert(next, move, color) {
     next.board[at.r][at.c] = makePiece(into, color, { hasMoved: true });
     // Converting a rook on its corner ends that castling right.
     updateCastlingRights(next, piece, at, at);
-    next.halfmoveClock = 0;
-    if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
     return next;
 }

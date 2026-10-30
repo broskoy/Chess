@@ -45,7 +45,7 @@ test('pinned pieces cannot move off the pin', () => {
 test('a pawn that has not moved can double step from any rank', () => {
     // The double step depends on the hasMoved flag: white pawn on e4 with hasMoved = false.
     const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
-    state.board[4][4] = { type: 'pawn', color: 'white', hasMoved: false, promoted: false };
+    state.board[4][4] = { type: 'pawn', color: 'white', hasMoved: false };
     const targets = getLegalMoves(state)
         .filter(m => m.from.r === 4 && m.from.c === 4)
         .map(m => m.to.r);
@@ -128,7 +128,7 @@ test('a pawn reaching the last rank promotes to a rook', () => {
     assert.deepEqual(promotions.map(m => m.promotion), ['rook']);
 
     const next = applyMove(state, promotions[0]);
-    assert.deepEqual(next.board[0][1], { type: 'rook', color: 'white', hasMoved: true, promoted: true });
+    assert.deepEqual(next.board[0][1], { type: 'rook', color: 'white', hasMoved: true });
 });
 
 // Standard test positions, one move deep. Deeper known counts include
@@ -193,7 +193,7 @@ test('a Necromancer raises an enemy piece in their own color', () => {
     state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // bishop steps off
     state = applyMove(state, findMove(state, [0, 3], [0, 2]));
     state = applyMove(state, resurrect(state));
-    assert.deepEqual(state.board[3][3], { type: 'knight', color: 'white', hasMoved: true, promoted: false });
+    assert.deepEqual(state.board[3][3], { type: 'knight', color: 'white', hasMoved: true });
     assert.equal(state.grave, null);
     assert.equal(state.turn, 'black');
 });
@@ -249,7 +249,7 @@ test('with two Necromancers, only the side that did the killing can raise', () =
 test('under standard rules, a resurrection can block check', () => {
     // White's Necromancer on e1 is checked along the first rank; the grave is on c1.
     const state = fromFEN('4k3/8/8/8/8/8/8/r3K3 w - - 0 1', { ...STANDARD, ...NECRO });
-    state.grave = { r: 7, c: 2, piece: { type: 'knight', color: 'black', hasMoved: true, promoted: false } };
+    state.grave = { r: 7, c: 2, piece: { type: 'knight', color: 'black', hasMoved: true } };
     assert.ok(resurrect(state));
 });
 
@@ -260,7 +260,7 @@ test('material counts piece values on the board', () => {
 
     // A raised enemy piece counts for the Necromancer.
     const state = fromFEN('4k3/8/8/3N4/8/8/8/4K3 w - - 0 1');
-    state.board[3][3] = { type: 'knight', color: 'black', hasMoved: true, promoted: false };
+    state.board[3][3] = { type: 'knight', color: 'black', hasMoved: true };
     assert.equal(materialOf(state, 'black'), 3);
     assert.equal(materialOf(state, 'white'), 0);
 });
@@ -280,7 +280,7 @@ test('downgrading earns points and upgrading spends them', () => {
     let state = fromFEN('4k3/8/8/8/3R4/8/3P4/4K3 w - - 0 1', ALCHEMIST);
     state = applyMove(state, findConvert(state, [4, 3], 'knight'));   // rook -> knight: +2
     assert.equal(state.budget.white, 2);
-    assert.deepEqual(state.board[4][3], { type: 'knight', color: 'white', hasMoved: true, promoted: false });
+    assert.deepEqual(state.board[4][3], { type: 'knight', color: 'white', hasMoved: true });
 
     state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     assert.ok(findConvert(state, [6, 3], 'bishop'), 'pawn -> bishop costs exactly 2');
@@ -360,7 +360,7 @@ test('the same position three times is a draw', () => {
 test('positions that look alike but differ in the grave or budget are not repeats', () => {
     const a = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
     const b = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
-    b.grave = { r: 3, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true, promoted: false } };
+    b.grave = { r: 3, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
     assert.notEqual(positionKey(a), positionKey(b));
 
     const c = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { alchemistBudget: 3 });
