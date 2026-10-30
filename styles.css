@@ -1,3 +1,10 @@
+/* Square size: as large as the window allows, leaving about 230px of height for the
+   labels, choices row and buttons, and room beside the board for the side bar. */
+:root {
+    --tile: clamp(40px, min(calc((100vh - 230px) / 8), calc((100vw - 200px) / 8)), 110px);
+    --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
+}
+
 body {
     background-color: #222;
     color: white;
@@ -12,19 +19,19 @@ body {
 
 #board {
     display: grid;
-    grid-template-columns: repeat(8, 60px);
-    grid-template-rows: repeat(8, 60px);
+    grid-template-columns: repeat(8, var(--tile));
+    grid-template-rows: repeat(8, var(--tile));
     border: 5px solid #444;
     user-select: none;
 }
 
 .tile {
-    width: 60px;
-    height: 60px;
+    width: var(--tile);
+    height: var(--tile);
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 40px;
+    font-size: calc(var(--tile) * 0.67);
     cursor: pointer;
 }
 .light-tile { background-color: #EEEED2; }
@@ -42,8 +49,8 @@ body {
 .highlight::after {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: calc(var(--tile) * 0.33);
+    height: calc(var(--tile) * 0.33);
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 50%;
 }
@@ -85,7 +92,7 @@ body {
 #promotion button:hover { background: #f6f669; }
 
 #rules {
-    width: 490px;
+    width: var(--board-width);
     margin-top: 12px;
     color: #ccc;
     font-size: 14px;
@@ -153,7 +160,7 @@ body {
 
 /* Ruler names above and below the board */
 .ruler-label {
-    width: 490px;
+    width: var(--board-width);
     margin: 6px 0;
     color: #bbb;
     font-size: 14px;
