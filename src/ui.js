@@ -50,7 +50,7 @@ class ChessUI {
     }
 
     play(move) {
-        const isCapture = move.type === 'move' && (move.enPassant || getPiece(this.state, move.to.r, move.to.c) !== null);
+        const isCapture = move.type === 'move' && getPiece(this.state, move.to.r, move.to.c) !== null;
         this.history.push(applyMove(this.state, move));
         this.clearSelection();
         this.update();

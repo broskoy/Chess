@@ -50,7 +50,10 @@ These carry over from standard chess, with a few deliberate changes.
 
 ### Pawn double step
 - A pawn's double step depends on a per-piece **`hasMoved` flag**, not on its rank. This matters for pieces that come back (resurrected) or change type (converted).
-- En passant applies to any double step.
+
+### No en passant
+- Removed. It exists to stop a double-stepping pawn from slipping past an enemy pawn, a subtlety that matters little next to the ruler abilities, and many casual players don't know it.
+- It also means every capture leaves the dead piece under the capturer, so every grave starts blocked.
 
 ### Castling
 - Tracked as rights in the game state (lost when the king moves or a rook's corner is moved from or captured on), not through the rook's `hasMoved`. A rook that is resurrected or created on a1/h1 can't castle.
@@ -60,7 +63,6 @@ These carry over from standard chess, with a few deliberate changes.
 - **Necromancer:**
   - Does a resurrected pawn get its double step again (`hasMoved = false`)?
   - Does a promoted piece come back as its promoted type, or as a pawn?
-  - En passant is the one capture where the capturer doesn't land on the grave, so that grave starts open. Fine as an exception, or should it be blocked too?
   - Can a resurrection capture or give check? (It can't capture, since the square must be empty; giving check is allowed for now.)
 - **Alchemist:** starting budget; whether budget is also earned per turn or per capture; whether upgrading to a queen is allowed or capped; one conversion per turn.
 - **Rounds:** how many, what changes between them (bot ruler, army budget, bot strength), and what the player keeps between rounds.
@@ -70,7 +72,8 @@ These carry over from standard chess, with a few deliberate changes.
 ### Phase 1 — Standard chess (done)
 - [x] Check, checkmate and stalemate (standard rules mode)
 - [x] King capture rule (setting, on by default)
-- [x] Castling, en passant, promotion with a choice of piece
+- [x] Castling, promotion with a choice of piece
+- [x] Removed en passant
 - [x] Per-piece `hasMoved` flag; castling rights tracking
 - [x] Game-over message, restart, undo
 - [ ] Draw rules: threefold repetition, 50-move rule, insufficient material (lower priority)
@@ -79,7 +82,7 @@ These carry over from standard chess, with a few deliberate changes.
 ### Phase 2 — Rulers framework and the Necromancer
 - [ ] Remove drops (engine, hands UI, drop settings)
 - [ ] Each side has a ruler type in the game state (plain king, Necromancer, later Alchemist)
-- [ ] Track the grave: square and dead piece, updated on every capture (including en passant)
+- [ ] Track the grave: square and dead piece, updated on every capture
 - [ ] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
 - [ ] Show the grave on the board (marker plus the dead piece), and a way to choose "resurrect" in the UI
 - [ ] Choose each side's ruler for testing (two players on one screen until the bot exists)
@@ -122,10 +125,10 @@ These carry over from standard chess, with a few deliberate changes.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 
 ### Engine design
-- **Game state is one plain object**: board, turn, castling rights, en passant square, rulers, grave, clocks and settings. Everything the rules depend on lives there.
+- **Game state is one plain object**: board, turn, castling rights, rulers, grave, clocks and settings. Everything the rules depend on lives there.
 - **Pure functions**: `applyMove(state, move)` returns a new state and never changes the old one. Pieces are never mutated, so copies can share them cheaply.
 - **Abilities are move types**, so the UI, undo and the bot handle them like any other move:
-  - Board move: `{ type: 'move', from, to, castle?, enPassant?, promotion? }`
+  - Board move: `{ type: 'move', from, to, castle?, promotion? }`
   - Resurrect: `{ type: 'resurrect' }` (the grave holds the square and piece)
   - Convert (Alchemist): `{ type: 'convert', at, to }`
 - Legal move generation: generate all moves including abilities, then (in standard-rules mode) drop any that leave your own king in check.

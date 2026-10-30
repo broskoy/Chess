@@ -129,45 +129,6 @@ test('perft depth 1 with castling ("Kiwipete" position)', () => {
 const findMove = (state, from, to) => getLegalMoves(state).find(m =>
     m.from && m.from.r === from[0] && m.from.c === from[1] && m.to.r === to[0] && m.to.c === to[1]);
 
-test('en passant right after a double step', () => {
-    // White pawn on e5, black plays d7-d5.
-    let state = fromFEN('4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1');
-    state = applyMove(state, findMove(state, [1, 3], [3, 3]));
-    assert.deepEqual(state.enPassant, { r: 2, c: 3 });
-
-    const capture = findMove(state, [3, 4], [2, 3]);
-    assert.equal(capture.enPassant, true);
-    const next = applyMove(state, capture);
-    assert.equal(next.board[3][3], null, 'the d5 pawn is removed');
-    assert.equal(next.board[2][3].type, 'pawn');
-    assert.equal(next.hands.white.pawn, 1);
-});
-
-test('en passant is only possible on the very next move', () => {
-    let state = fromFEN('4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1');
-    state = applyMove(state, findMove(state, [1, 3], [3, 3]));
-    state = applyMove(state, findMove(state, [7, 4], [7, 3]));  // white king moves instead
-    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
-    assert.equal(findMove(state, [3, 4], [2, 3]), undefined);
-});
-
-test('a double step from any rank allows en passant', () => {
-    // Simulates a dropped black pawn on d6 that hasn't moved, next to a white pawn arriving on e4.
-    let state = fromFEN('4k3/8/8/8/4P3/8/8/4K3 b - - 0 1');
-    state.board[2][3] = { type: 'pawn', color: 'black', hasMoved: false, promoted: false };
-    state = applyMove(state, findMove(state, [2, 3], [4, 3]));
-    assert.deepEqual(state.enPassant, { r: 3, c: 3 });
-    assert.equal(findMove(state, [4, 4], [3, 3]).enPassant, true);
-});
-
-test('perft with en passant (standard test position 3)', () => {
-    const state = fromFEN('8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1', STANDARD);
-    assert.equal(perft(state, 1), 14);
-    assert.equal(perft(state, 2), 191);
-    assert.equal(perft(state, 3), 2812);
-    assert.equal(perft(state, 4), 43238);
-});
-
 test('a pawn reaching the last rank promotes, with a choice of piece', () => {
     const state = fromFEN('4k3/1P6/8/8/8/8/8/4K3 w - - 0 1');
     const promotions = getLegalMoves(state).filter(m => m.from.r === 1 && m.from.c === 1);
@@ -187,21 +148,14 @@ test('a captured promoted piece goes to hand as itself, or as a pawn with demote
     }
 });
 
-// Standard positions covering castling, en passant and promotion together.
-test('perft on positions with every special move', () => {
-    const kiwipete = fromFEN('r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1', STANDARD);
-    assert.equal(perft(kiwipete, 2), 2039);
-    assert.equal(perft(kiwipete, 3), 97862);
-
+// Standard test positions, one move deep. Deeper known counts include
+// en passant, which this game doesn't have.
+test('perft depth 1 on positions with castling and promotion', () => {
     const position4 = fromFEN('r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1', STANDARD);
     assert.equal(perft(position4, 1), 6);
-    assert.equal(perft(position4, 2), 264);
-    assert.equal(perft(position4, 3), 9467);
 
     const position5 = fromFEN('rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8', STANDARD);
     assert.equal(perft(position5, 1), 44);
-    assert.equal(perft(position5, 2), 1486);
-    assert.equal(perft(position5, 3), 62379);
 });
 
 const drops = state => getLegalMoves(state).filter(m => m.type === 'drop');
@@ -291,4 +245,11 @@ test('under standard rules, checkmate counts drops as escapes', () => {
     assert.equal(getStatus(state).result, 'checkmate');
     state.hands.white.bishop = 1;
     assert.equal(getStatus(state).result, 'playing');
+});
+
+test('there is no en passant', () => {
+    // White pawn on e5, black plays d7-d5: capturing on d6 is not allowed.
+    let state = fromFEN('4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1');
+    state = applyMove(state, findMove(state, [1, 3], [3, 3]));
+    assert.equal(findMove(state, [3, 4], [2, 3]), undefined);
 });

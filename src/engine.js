@@ -56,7 +56,6 @@ export function createInitialState(settings = {}) {
             white: { kingside: true, queenside: true },
             black: { kingside: true, queenside: true },
         },
-        enPassant: null,     // square a pawn can capture onto, or null
         hands: { white: emptyHand(), black: emptyHand() },
         dropCooldown: { white: 0, black: 0 },
         halfmoveClock: 0,
@@ -65,9 +64,10 @@ export function createInitialState(settings = {}) {
     };
 }
 
-// Parses standard FEN (board, turn, castling, en passant, clocks). Hands start empty.
+// Parses standard FEN (board, turn, castling, clocks). There is no en passant
+// in this game, so that field is ignored. Hands start empty.
 export function fromFEN(fen, settings = {}) {
-    const [placement, turn = 'w', castling = '-', ep = '-', half = '0', full = '1'] = fen.trim().split(/\s+/);
+    const [placement, turn = 'w', castling = '-', , half = '0', full = '1'] = fen.trim().split(/\s+/);
     const state = createInitialState(settings);
 
     state.board = placement.split('/').map((row, r) => {
@@ -89,7 +89,6 @@ export function fromFEN(fen, settings = {}) {
         white: { kingside: castling.includes('K'), queenside: castling.includes('Q') },
         black: { kingside: castling.includes('k'), queenside: castling.includes('q') },
     };
-    state.enPassant = ep === '-' ? null : { r: 8 - Number(ep[1]), c: ep.charCodeAt(0) - 97 };
     state.halfmoveClock = Number(half);
     state.fullmoveNumber = Number(full);
     return state;
@@ -103,14 +102,10 @@ export function getPiece(state, r, c) {
     return inBounds(r, c) ? state.board[r][c] : null;
 }
 
-function sameSquare(a, b) {
-    return a !== null && b !== null && a.r === b.r && a.c === b.c;
-}
-
 // --- Move generation ---------------------------------------------------------
 //
 // Moves are plain objects:
-//   { type: 'move', from: {r, c}, to: {r, c}, castle?, enPassant?, promotion? }
+//   { type: 'move', from: {r, c}, to: {r, c}, castle?, promotion? }
 //   { type: 'drop', piece, to: {r, c} }            piece is a type name, e.g. 'knight'
 
 function pieceMoves(state, r, c) {
@@ -141,11 +136,7 @@ function pieceMoves(state, r, c) {
             if (!piece.hasMoved && isEmpty(r + 2 * dir, c)) addPawn(r + 2 * dir, c);
         }
         for (const dc of [-1, 1]) {
-            if (isEnemy(r + dir, c + dc)) {
-                addPawn(r + dir, c + dc);
-            } else if (sameSquare(state.enPassant, { r: r + dir, c: c + dc })) {
-                moves.push({ type: 'move', from, to: state.enPassant, enPassant: true });
-            }
+            if (isEnemy(r + dir, c + dc)) addPawn(r + dir, c + dc);
         }
         return moves;
     }
@@ -354,16 +345,13 @@ export function applyMove(state, move) {
 
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
-    // En passant takes the pawn beside the capturing pawn, not one on the target square.
-    const capturedAt = move.enPassant ? { r: from.r, c: to.c } : to;
-    const captured = next.board[capturedAt.r][capturedAt.c];
+    const captured = next.board[to.r][to.c];
 
     if (captured && captured.type !== 'king') {
         const type = captured.promoted && next.settings.demotePromoted ? 'pawn' : captured.type;
         next.hands[color][type]++;
     }
 
-    next.board[capturedAt.r][capturedAt.c] = null;
     next.board[to.r][to.c] = move.promotion
         ? makePiece(move.promotion, piece.color, { hasMoved: true, promoted: true })
         : { ...piece, hasMoved: true };
@@ -376,9 +364,6 @@ export function applyMove(state, move) {
     }
 
     updateCastlingRights(next, piece, from, to);
-    // Any double step allows en passant, including one by a dropped pawn far from its start rank.
-    const doubleStep = piece.type === 'pawn' && Math.abs(to.r - from.r) === 2;
-    next.enPassant = doubleStep ? { r: (from.r + to.r) / 2, c: from.c } : null;
     next.halfmoveClock = piece.type === 'pawn' || captured ? 0 : next.halfmoveClock + 1;
     next.dropCooldown[color] = Math.max(0, next.dropCooldown[color] - 1);
     if (color === BLACK) next.fullmoveNumber++;
@@ -392,7 +377,6 @@ function applyDrop(next, move, color) {
     next.board[move.to.r][move.to.c] = makePiece(move.piece, color);
     next.hands[color][move.piece]--;
     next.dropCooldown[color] = next.settings.dropCooldown;
-    next.enPassant = null;
     next.halfmoveClock++;
     if (color === BLACK) next.fullmoveNumber++;
     next.turn = opponent(color);
