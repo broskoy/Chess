@@ -142,6 +142,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser) — now hidden, see Home screen
 - [x] No status line: the turn light, the red ruler square and the grave glow already show what it said
+- [x] Board scales with the window (squares 40-80px on wide screens)
+- [x] Phones: below 700px wide, the board and side bar are centered together and the side bar shrinks, so the board fits; buttons wrap. Taps go through immediately (`touch-action: manipulation` turns off the double-tap-zoom wait)
 - [x] Resurrect sound
 - [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
 - [x] Side bar beside the board, as separate pieces spanning the board's height: each player's card (material, ruler ability box) at their edge of the board, the turn light in the middle

@@ -3,6 +3,33 @@
 :root {
     --tile: clamp(40px, min(calc((100vh - 250px) / 8), calc((100vw - 200px) / 8)), 80px);
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
+
+    /* Side bar sizes. A squircle is as wide as the turn light's housing. */
+    --socket: 34px;
+    --light-pad: 8px;
+    --light-gap: 10px;
+    --slot: calc(var(--socket) + 2 * var(--light-pad) + 4px);   /* + 2 × 2px border */
+    --bar-gap: 16px;
+}
+
+/* Narrow screens (phones): the board and side bar are centered together rather than
+   centering the board alone, and the side bar shrinks, so the board can be wider. */
+@media (max-width: 700px) {
+    :root {
+        --socket: 26px;
+        --light-pad: 5px;
+        --light-gap: 8px;
+        --bar-gap: 8px;
+        --tile: clamp(28px, min(calc((100vh - 250px) / 8),
+            calc((100vw - 24px - 10px - var(--bar-gap) - var(--slot)) / 8)), 80px);
+    }
+    /* The extra right padding shifts everything left by half the side bar's width. */
+    body {
+        box-sizing: border-box;
+        padding: 0 calc(12px + var(--bar-gap) + var(--slot)) 0 12px;
+    }
+    #controls { flex-wrap: wrap; justify-content: center; }
+    #controls button { padding: 8px 12px; font-size: 15px; }
 }
 
 /* Phones wait ~300ms after a tap to see if it's a double-tap zoom before sending the
@@ -117,12 +144,12 @@ body {
 
 #controls button:disabled { opacity: 0.45; cursor: default; }
 
-/* Side bar beside the board, positioned so the board itself stays centered.
+/* Side bar beside the board, positioned so the board itself stays centered (on wide screens).
    It spans the board's height: each player's card at their edge, the turn light in the middle. */
 #board-area { position: relative; }
 #side-bar {
     position: absolute;
-    left: calc(100% + 16px);
+    left: calc(100% + var(--bar-gap));
     top: 0;
     bottom: 0;
     display: flex;
@@ -133,21 +160,21 @@ body {
 .side-card, #turn-light {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--light-gap);
 }
-/* Only the turn light has a housing; the player squircles match its width (34 + 2 × 8 + 2 × 2). */
+/* Only the turn light has a housing; the player squircles match its width. */
 #turn-light {
-    padding: 8px;
+    padding: var(--light-pad);
     background: #333;
     border: 2px solid #444;
     border-radius: 14px;
 }
 /* One marker slides between two sockets, fading from white through gray to black.
-   The 44px offset is the socket size plus the gap between sockets. */
+   The bottom socket is one socket plus one gap further down. */
 #turn-light { position: relative; }
 .socket, #turn-marker {
-    width: 34px;
-    height: 34px;
+    width: var(--socket);
+    height: var(--socket);
     box-sizing: border-box;
     border-radius: 32%;   /* squircle-ish */
 }
@@ -155,14 +182,14 @@ body {
 .socket { visibility: hidden; }
 #turn-marker {
     position: absolute;
-    left: 8px;
-    top: 8px;
+    left: var(--light-pad);
+    top: var(--light-pad);
     border: 2px solid transparent;
     transition: transform 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
 }
 #turn-marker.top { transform: translateY(0); }
-#turn-marker.middle { transform: translateY(22px); }
-#turn-marker.bottom { transform: translateY(44px); }
+#turn-marker.middle { transform: translateY(calc((var(--socket) + var(--light-gap)) / 2)); }
+#turn-marker.bottom { transform: translateY(calc(var(--socket) + var(--light-gap))); }
 #turn-marker.white { background-color: #f4f4f4; border-color: #bbb; }
 #turn-marker.black { background-color: #111; border-color: #777; }
 #turn-marker.draw { background-color: #888; border-color: #999; }
@@ -190,8 +217,8 @@ body {
 }
 
 .slot {
-    width: 54px;
-    height: 54px;
+    width: var(--slot);
+    height: var(--slot);
     box-sizing: border-box;
     border-radius: 32%;
     display: flex;
@@ -202,14 +229,14 @@ body {
 .material {
     background: #555;
     color: #eee;
-    font-size: 20px;
+    font-size: calc(var(--slot) * 0.37);
     font-weight: bold;
 }
 .ability.none { display: none; }
 .ability.necromancer {
     background: #9677cf;
     border: 2px solid #6b3fa0;
-    font-size: 38px;
+    font-size: calc(var(--slot) * 0.7);
 }
 .ability.locked { color: rgba(0, 0, 0, 0); }
 .ability.locked.white-piece { text-shadow: 0 0 0 rgba(255, 255, 255, 0.55), 0 0 2px rgba(0, 0, 0, 0.4); }
@@ -222,7 +249,7 @@ body {
     background: #3f7bd1;
     border: 2px solid #2a5ca6;
     color: #fff;
-    font-size: 20px;
+    font-size: calc(var(--slot) * 0.37);
     font-weight: bold;
 }
 .ruler-alchemist { text-shadow: 0 0 6px #4a9bff, 0 0 2px #000; }
