@@ -122,16 +122,16 @@ These carry over from standard chess, with a few deliberate changes.
 
 ### Polish (done so far)
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
-- [x] Turn indicator ("stoplight" beside the board; the winner stays lit at game end)
+- [x] Turn indicator ("stoplight" beside the board): one marker slides to the side to move, changing from white through gray to black. No glow (a glowing black light looked odd). At game end it stays with the winner; on a draw it parks in the middle in gray
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
 - [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
 - [x] Resurrect sound
 - [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
-- [x] Side bar beside the board, mirrored per side (top to bottom: top player's material, top ruler's ability box, turn light, bottom ruler's ability box, bottom player's material)
+- [x] Side bar beside the board, as separate pieces spanning the board's height: each player's card (material, ruler ability box) at their edge of the board, the turn light in the middle
   - Material: total piece values on the board per side (pawn 1, knight 3, bishop 3, rook 5, queen 9), so players don't have to recount after raises and conversions
   - Necromancer box: the grave's enemy piece in the Necromancer's color; faded while blocked, glowing when it can be raised (click to raise); empty when there's nothing to raise
-  - A plain King's box is hidden but keeps its space, so the turn light stays centered
+  - A plain King has no ability box, so its card only shows material
   - Alchemist box (planned): budget in blue
 - [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork

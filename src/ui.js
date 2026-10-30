@@ -212,7 +212,7 @@ class ChessUI {
 
     // A Necromancer's box shows what they could raise: the grave's enemy piece,
     // faded while something blocks the grave. A plain King has no ability, so its
-    // box is hidden (but keeps its space, so the turn light stays centered).
+    // box is hidden.
     renderAbility(element, color) {
         element.className = 'slot ability';
         element.textContent = '';
@@ -242,16 +242,13 @@ class ChessUI {
         }
     }
 
-    // Two lights matching the board orientation: the side to move is lit,
-    // and once the game is over the winner stays lit.
+    // The marker sits on the side to move, in that side's color. Once the game
+    // is over it stays with the winner, or parks in the middle in gray on a draw.
     renderTurnLight() {
         const { result, winner } = this.status;
-        const litColor = result === 'playing' ? this.state.turn : winner;
-        const [top, bottom] = this.elements.turnLight.children;
-        for (const [light, color] of [[top, opponent(this.bottomColor)], [bottom, this.bottomColor]]) {
-            light.className = `light ${color}-light`;
-            light.classList.toggle('on', color === litColor);
-        }
+        const color = result === 'playing' ? this.state.turn : winner;
+        const position = color === null ? 'middle' : color === this.bottomColor ? 'bottom' : 'top';
+        this.elements.turnMarker.className = `${position} ${color ?? 'draw'}`;
     }
 
     renderPromotionChoices() {
@@ -333,7 +330,7 @@ function bindSettingsForm(form, ui) {
 
 const ui = new ChessUI({
     board: document.getElementById('board'),
-    turnLight: document.getElementById('turn-light'),
+    turnMarker: document.getElementById('turn-marker'),
     materialTop: document.getElementById('material-top'),
     materialBottom: document.getElementById('material-bottom'),
     abilityTop: document.getElementById('ability-top'),

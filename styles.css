@@ -95,36 +95,51 @@ body {
 
 #controls button:disabled { opacity: 0.45; cursor: default; }
 
-/* Side bar beside the board, positioned so the board itself stays centered:
-   material, ruler ability and turn light for each side, mirrored around the middle */
+/* Side bar beside the board, positioned so the board itself stays centered.
+   It spans the board's height: each player's card at their edge, the turn light in the middle. */
 #board-area { position: relative; }
 #side-bar {
     position: absolute;
     left: calc(100% + 16px);
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 10px;
+    justify-content: space-between;
+    align-items: center;
+}
+.side-card, #turn-light {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px;
     background: #333;
     border: 2px solid #444;
     border-radius: 14px;
 }
-.light {
+/* One marker slides between two sockets, fading from white through gray to black.
+   The 44px offset is the socket size plus the gap between sockets. */
+#turn-light { position: relative; }
+.socket, #turn-marker {
     width: 34px;
     height: 34px;
     box-sizing: border-box;
     border-radius: 32%;   /* squircle-ish */
-    opacity: 0.2;
-    transition: opacity 0.2s, box-shadow 0.2s;
 }
-.white-light { background: #f4f4f4; }
-.black-light { background: #000; border: 2px solid #777; }
-.light.on {
-    opacity: 1;
-    box-shadow: 0 0 12px 3px rgba(246, 246, 105, 0.6);
+.socket { background: #2a2a2a; border: 2px solid #3d3d3d; }
+#turn-marker {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    border: 2px solid transparent;
+    transition: transform 0.35s ease, background-color 0.35s ease, border-color 0.35s ease;
 }
+#turn-marker.top { transform: translateY(0); }
+#turn-marker.middle { transform: translateY(22px); }
+#turn-marker.bottom { transform: translateY(44px); }
+#turn-marker.white { background-color: #f4f4f4; border-color: #bbb; }
+#turn-marker.black { background-color: #111; border-color: #777; }
+#turn-marker.draw { background-color: #888; border-color: #999; }
 
 /* Ruler names above and below the board */
 .ruler-label {
@@ -160,14 +175,6 @@ body {
     50% { box-shadow: inset 0 0 0 3px rgba(163, 92, 255, 0.9); }
 }
 
-#turn-light {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 8px 0;
-    border-top: 1px solid #444;
-    border-bottom: 1px solid #444;
-}
 .slot {
     width: 34px;
     height: 34px;
@@ -184,7 +191,7 @@ body {
     font-size: 15px;
     font-weight: bold;
 }
-.ability.none { visibility: hidden; }
+.ability.none { display: none; }
 .ability.necromancer {
     background: #9677cf;
     border: 2px solid #6b3fa0;

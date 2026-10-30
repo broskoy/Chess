@@ -12,11 +12,11 @@ Chess, but each side's king is a **ruler** with a special power. If you know che
 
 ## The bar beside the board
 
-The bar to the right of the board is mirrored: the top half belongs to the player at the top, the bottom half to the player at the bottom.
+The bar to the right of the board is mirrored: the card at the top belongs to the player at the top, the card at the bottom to the player at the bottom.
 
 - **Gray boxes** show each side's total material on the board (pawn 1, knight 3, bishop 3, rook 5, queen 9).
 - **Ruler boxes** show what each ruler's power has ready (for example, the Necromancer's grave).
-- **The lights** in the middle show whose turn it is. When the game ends, the winner's light stays on.
+- **The light** in the middle slides toward whoever's turn it is, and takes their color. When the game ends, it stays with the winner.
 
 ## The rulers
 
