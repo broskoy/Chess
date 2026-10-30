@@ -137,7 +137,21 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [ ] Teach it the rest of the rulers' potential. Resurrecting and converting are already moves, so the search sees what they do; what it can't see yet is an open grave's threat (a strong enemy piece waiting, a piece tied to the grave). That value starts at 0
 - [ ] Difficulty levels (how deep it looks)
 
-**Tuning by self-play, not guessing.** Nobody knows yet what an open grave is worth, or whether one pawn per alchemy point is the right weight. Instead of guessing, a Node script will play many bot-against-bot games with different values (e.g. grave worth 0 vs 2) and report win rates. The same tool answers balance questions such as how often a Necromancer beats a plain King.
+**Tuning by self-play, not guessing.** Nobody knows yet what an open grave is worth, or whether one pawn per alchemy point is the right weight. [tools/selfplay.mjs](tools/selfplay.mjs) plays bot-against-bot games and reports win rates, so those values and ruler balance can be measured.
+
+First results (2026-10-31): 100 games per pair, depth 3, Alchemist budget 0. With this sample each count is only good to about ±10.
+
+| Pair (A vs B) | A wins | B wins | Draws | Unfinished | Ability uses per game (A / B) |
+|---|---|---|---|---|---|
+| King vs King | 32 | 39 | 21 | 8 | 0 / 0 |
+| King vs Necromancer | 27 | 53 | 19 | 1 | 0 / 1.3 |
+| King vs Alchemist | 13 | 64 | 19 | 4 | 0 / 12.9 |
+| Necromancer vs Alchemist | 27 | 56 | 14 | 3 | 0.9 / 12.6 |
+
+- White won 167 of the 311 decided games (54%), so any first-move edge is small.
+- The Necromancer beats the King about 2 to 1 with roughly one raise per game, and the bot doesn't even value the grave yet.
+- The Alchemist is the strongest ruler already at budget 0, so the earlier idea of giving it a bigger starting budget looks unnecessary.
+- How it wins (10 inspected games, 107 conversions): mostly breaking big pieces into small ones. It downgrades a queen or rook to a bishop or knight, then spends the points turning pawns into minor pieces. Only 21 of the conversions were on an attacked piece. This matches the "more pieces beat bigger pieces" tip, but it could partly come from the evaluation's center bonus for minor pieces, or from shallow bots handling many minor pieces badly. Worth checking against a human.
 
 ### Phase 5 — Rounds and armies
 - [ ] Multiple rounds against the bot with different rulers
@@ -186,6 +200,7 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 - [test/bot.test.js](test/bot.test.js), [test/notation.test.js](test/notation.test.js): bot behavior, and writing and replaying games.
 - [tools/replay.mjs](tools/replay.mjs): replays a copied game and shows what the bot thinks.
+- [tools/selfplay.mjs](tools/selfplay.mjs): plays bot-against-bot games and reports win rates.
 
 ### Engine design
 - **Game state is one plain object**: board, turn, castling rights, grave, Alchemist budgets and settings (including each side's ruler). Everything the rules depend on lives there.
@@ -200,4 +215,5 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 ### Running
 - Game: `npm run serve`, then open http://localhost:8000. ES modules don't load from `file://`, so opening index.html directly won't work. The server ([serve.py](serve.py)) disables browser caching so edits show up on a normal reload.
 - Tests: `npm test`.
+- Bot-against-bot games: `npm run selfplay -- --games 100 --depth 3 --budget 0 --seed 1`. Every ruler pair plays with colors swapped each game; the same seed repeats the same games.
 - Replaying a copied game: save it to a file, then `npm run replay -- game.txt [half-moves]`. Shows the position (rulers, grave, points), the move the bot would play and how deep it searched, and every legal move with its score ([tools/replay.mjs](tools/replay.mjs)).
