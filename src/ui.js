@@ -5,13 +5,12 @@ import {
 } from './engine.js';
 import { sounds } from './sound.js';
 import { setupMenu } from './menu.js';
+import { RULER_INFO } from './rulers.js';
 
 const SYMBOLS = {
     'white-king': '♔', 'white-queen': '♕', 'white-rook': '♖', 'white-bishop': '♗', 'white-knight': '♘', 'white-pawn': '♙',
     'black-king': '♚', 'black-queen': '♛', 'black-rook': '♜', 'black-bishop': '♝', 'black-knight': '♞', 'black-pawn': '♟',
 };
-
-const RULER_NAMES = { king: 'King', necromancer: 'Necromancer', alchemist: 'Alchemist' };
 
 const sameSquare = (a, b) => a !== null && b !== null && a.r === b.r && a.c === b.c;
 const capitalize = s => s[0].toUpperCase() + s.slice(1);
@@ -143,9 +142,8 @@ class ChessUI {
 
     render() {
         this.renderBoard();
-        this.renderRulerLabel(this.elements.rulerTop, opponent(this.bottomColor));
-        this.renderRulerLabel(this.elements.rulerBottom, this.bottomColor);
-        this.renderSideBar();
+        this.renderPlayerRows();
+        this.renderTurnLight();
         this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
         this.renderConvertChoices();
@@ -209,19 +207,22 @@ class ChessUI {
         }
     }
 
-    renderRulerLabel(element, color) {
-        element.textContent = RULER_NAMES[rulerOf(this.state, color)];
+    renderRulerIcon(element, color) {
+        const info = RULER_INFO[rulerOf(this.state, color)];
+        element.textContent = info.art;
+        element.title = info.name;
+        element.style.setProperty('--accent', info.accent);
     }
 
-    // The bar beside the board, mirrored for each side: material, ruler ability, turn light.
-    renderSideBar() {
+    // Each player's row: ruler icon, material on the board, and ruler ability.
+    renderPlayerRows() {
         for (const [position, color] of [['Top', opponent(this.bottomColor)], ['Bottom', this.bottomColor]]) {
+            this.renderRulerIcon(this.elements[`icon${position}`], color);
             const material = this.elements[`material${position}`];
             material.textContent = materialOf(this.state, color);
             material.title = `${capitalize(color)}'s material on the board`;
             this.renderAbility(this.elements[`ability${position}`], color);
         }
-        this.renderTurnLight();
     }
 
     // A Necromancer's box shows what they could raise: the grave's enemy piece,
@@ -272,62 +273,62 @@ class ChessUI {
         this.elements.turnMarker.className = `${position} ${color ?? 'draw'}`;
     }
 
-    // When an Alchemist's piece is selected, a row under the board offers every
-    // conversion with its price; ones that aren't allowed right now are greyed out.
+    // The Alchemist's conversion buttons, always shown in the bottom player's row.
+    // They stay greyed out without prices until one of that player's pieces is
+    // selected; then each shows its price and lights up if it's allowed.
     renderConvertChoices() {
         const element = this.elements.convert;
+        const color = this.bottomColor;
         element.innerHTML = '';
-        const piece = this.selected ? getPiece(this.state, this.selected.r, this.selected.c) : null;
-        const show = piece !== null && piece.type !== 'king' && !this.promotionChoices
-            && rulerOf(this.state, piece.color) === 'alchemist' && this.status.result === 'playing';
-        element.hidden = !show;
-        if (!show) return;
+        element.hidden = rulerOf(this.state, color) !== 'alchemist' || this.promotionChoices !== null;
+        if (element.hidden) return;
 
-        const label = document.createElement('span');
-        label.className = 'choice-label';
-        label.textContent = 'Convert to:';
-        element.appendChild(label);
+        const piece = this.selected ? getPiece(this.state, this.selected.r, this.selected.c) : null;
+        const active = piece !== null && piece.color === color && piece.type !== 'king'
+            && this.status.result === 'playing';
 
         for (const into of CONVERTIBLE_TYPES) {
-            if (into === piece.type) continue;
-            const move = this.legalMoves.find(m =>
-                m.type === 'convert' && sameSquare(m.at, this.selected) && m.into === into);
-            const cost = conversionCost(piece.type, into);
             const button = document.createElement('button');
-            button.className = `convert-choice ${piece.color}-piece`;
-            button.textContent = SYMBOLS[`${piece.color}-${into}`];
-            const price = document.createElement('span');
-            price.className = 'price';
-            price.textContent = cost < 0 ? `+${-cost}` : cost > 0 ? `−${cost}` : '0';
-            button.appendChild(price);
-            button.disabled = !move;
-            if (move) {
-                button.title = `Turn into a ${into}`;
-                button.onclick = () => this.play(move);
-            } else {
-                button.title = into === 'pawn' && cost <= this.state.budget[piece.color]
-                    ? 'New pawns can only be made in your own half'
-                    : 'Not enough points';
+            button.className = `choice ${color}-piece`;
+            button.textContent = SYMBOLS[`${color}-${into}`];
+            button.title = into;
+            button.disabled = true;
+            if (active && into !== piece.type) {
+                const cost = conversionCost(piece.type, into);
+                const price = document.createElement('span');
+                price.className = 'price';
+                price.textContent = cost < 0 ? `+${-cost}` : cost > 0 ? `−${cost}` : '0';
+                button.appendChild(price);
+
+                const move = this.legalMoves.find(m =>
+                    m.type === 'convert' && sameSquare(m.at, this.selected) && m.into === into);
+                if (move) {
+                    button.disabled = false;
+                    button.title = `Turn into a ${into}`;
+                    button.onclick = () => this.play(move);
+                } else {
+                    button.title = into === 'pawn' && cost <= this.state.budget[color]
+                        ? 'New pawns can only be made in your own half'
+                        : 'Not enough points';
+                }
             }
             element.appendChild(button);
         }
     }
 
+    // Shown in the bottom row, in place of the conversion buttons, when a pawn
+    // can promote to more than one piece.
     renderPromotionChoices() {
         const element = this.elements.promotion;
         element.innerHTML = '';
         element.hidden = !this.promotionChoices;
         if (!this.promotionChoices) return;
 
-        const label = document.createElement('span');
-        label.className = 'choice-label';
-        label.textContent = 'Promote to:';
-        element.appendChild(label);
         for (const move of this.promotionChoices) {
             const button = document.createElement('button');
+            button.className = `choice ${this.state.turn}-piece`;
             button.textContent = SYMBOLS[`${this.state.turn}-${move.promotion}`];
-            button.title = move.promotion;
-            button.className = `${this.state.turn}-piece`;
+            button.title = `Promote to a ${move.promotion}`;
             button.onclick = () => this.play(move);
             element.appendChild(button);
         }
@@ -392,8 +393,8 @@ const ui = new ChessUI({
     materialBottom: document.getElementById('material-bottom'),
     abilityTop: document.getElementById('ability-top'),
     abilityBottom: document.getElementById('ability-bottom'),
-    rulerTop: document.getElementById('ruler-top'),
-    rulerBottom: document.getElementById('ruler-bottom'),
+    iconTop: document.getElementById('icon-top'),
+    iconBottom: document.getElementById('icon-bottom'),
     promotion: document.getElementById('promotion'),
     convert: document.getElementById('convert'),
     undo: document.getElementById('undo'),

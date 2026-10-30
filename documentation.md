@@ -117,7 +117,7 @@ These carry over from standard chess, with a few deliberate changes.
 
 ### Phase 3 — Alchemist
 - [x] Budget in the game state, conversion moves (`{ type: 'convert', at, into }`)
-- [x] UI: selecting an Alchemist's piece shows a "Convert to:" row with prices; blue budget squircle in the side bar; starting budget in the Rules panel; conversion sound
+- [x] UI: conversion buttons for all five types in the player's row, always visible; greyed out without prices until a piece is selected, then priced and lit up where allowed. Blue budget squircle in the player's row; starting budget in the Rules panel; conversion sound
 - [x] Tests
 
 ### Main menu
@@ -143,19 +143,20 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
 - [x] Turn indicator ("stoplight" beside the board): one marker slides to the side to move, changing from white through gray to black. No glow (a glowing black light looked odd). At game end it stays with the winner; on a draw it parks in the middle in gray
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
-- [x] Icon buttons under the board: house (main menu), circular arrow (restart), curved arrow (undo), speaker (sound; a diagonal line through it when muted). Drawn by hand as inline SVG, so there's no icon license to track
+- [x] Icon buttons: house (main menu), circular arrow (restart), curved arrow (undo), speaker (sound; a diagonal line through it when muted). Drawn by hand as inline SVG, so there's no icon license to track
 - Removed the flip board button (not needed once you always play from your own side). The board can still be drawn with black at the bottom, for playing the bot as black later. Auto-flip each turn was tried earlier and felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser) — now hidden, see Home screen
 - [x] No status line: the turn light, the red ruler square and the grave glow already show what it said
 - [x] Board scales with the window (squares 40-80px on wide screens)
-- [x] Phones: below 700px wide, the board and side bar are centered together and the side bar shrinks, so the board fits; buttons wrap. Taps go through immediately (`touch-action: manipulation` turns off the double-tap-zoom wait)
+- [x] Phones: below 700px wide, the board and side bar are centered together and the side bar shrinks, so the board fits; the player rows' squircles shrink to stay within the board's width. Taps go through immediately (`touch-action: manipulation` turns off the double-tap-zoom wait)
 - [x] Resurrect sound
 - [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
-- [x] Side bar beside the board, as separate pieces spanning the board's height: each player's card (material, ruler ability box) at their edge of the board, the turn light in the middle
+- [x] Player rows above (opponent) and below (you) the board, from the left: ruler icon (placeholder art in the ruler's color), material, ruler ability box, and for the Alchemist at the bottom the five conversion buttons
   - Material: total piece values on the board per side (pawn 1, knight 3, bishop 3, rook 5, queen 9), so players don't have to recount after raises and conversions
   - Necromancer box: the grave's enemy piece in the Necromancer's color; faded while blocked, glowing when it can be raised (click to raise); empty when there's nothing to raise
-  - A plain King has no ability box, so its card only shows material
+  - A plain King has no ability box
   - Alchemist box: budget in blue
+- [x] Side bar beside the board, spanning its height, for general controls: home, restart, undo and mute at the top, the turn light in the middle, and an empty slot for items at the bottom
 - [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork
 

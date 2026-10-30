@@ -1,7 +1,7 @@
-/* Square size: as large as the window allows, leaving about 250px of height for the
-   labels, choices row and buttons, and room beside the board for the side bar. */
+/* Square size: as large as the window allows, leaving about 170px of height for the
+   player rows above and below the board, and room beside the board for the side bar. */
 :root {
-    --tile: clamp(40px, min(calc((100vh - 250px) / 8), calc((100vw - 200px) / 8)), 80px);
+    --tile: clamp(40px, min(calc((100vh - 170px) / 8), calc((100vw - 200px) / 8)), 80px);
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
 
     /* Side bar sizes. A squircle is as wide as the turn light's housing. */
@@ -10,6 +10,11 @@
     --light-gap: 10px;
     --slot: calc(var(--socket) + 2 * var(--light-pad) + 4px);   /* + 2 × 2px border */
     --bar-gap: 16px;
+
+    /* Player rows hold up to 8 squircles (icon, material, ability, 5 conversions)
+       and stay within the board's width. */
+    --row-gap: 8px;
+    --row-item: min(var(--slot), calc((var(--board-width) - 7 * var(--row-gap)) / 8));
 }
 
 /* Narrow screens (phones): the board and side bar are centered together rather than
@@ -20,7 +25,8 @@
         --light-pad: 5px;
         --light-gap: 8px;
         --bar-gap: 8px;
-        --tile: clamp(28px, min(calc((100vh - 250px) / 8),
+        --row-gap: 5px;
+        --tile: clamp(28px, min(calc((100vh - 170px) / 8),
             calc((100vw - 24px - 10px - var(--bar-gap) - var(--slot)) / 8)), 80px);
     }
     body {
@@ -29,7 +35,6 @@
     }
     /* The extra right padding shifts the game left by half the side bar's width. */
     #game { padding-right: calc(var(--bar-gap) + var(--slot)); }
-    #controls { flex-wrap: wrap; justify-content: center; }
 }
 
 /* Phones wait ~300ms after a tap to see if it's a double-tap zoom before sending the
@@ -93,36 +98,72 @@ body {
     border-radius: 50%;
 }
 
-
-#controls {
+/* Player rows above and below the board */
+.player-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #ccc;
+    gap: var(--row-gap);
+    width: var(--board-width);
+    height: var(--row-item);
+    margin: 8px 0;
+}
+.player-row .slot { --size: var(--row-item); }
+.choices { display: flex; gap: var(--row-gap); }
+.choices[hidden] { display: none; }
+
+/* A ruler's placeholder art in its color */
+.ruler-icon {
+    background: #2d2d2d;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-size: calc(var(--size) * 0.6);
 }
 
-#controls button {
-    background: #444;
-    color: white;
-    border: none;
-    padding: 8px 18px;
-    font-size: 16px;
+/* Conversion and promotion choices: a piece on a light squircle, with its price
+   in points once a piece is selected */
+.choice {
+    position: relative;
+    width: var(--row-item);
+    height: var(--row-item);
+    padding: 0;
+    font-size: calc(var(--row-item) * 0.68);
+    line-height: 1;
+    background: #EEEED2;
+    border: 2px solid transparent;
+    border-radius: 32%;
     cursor: pointer;
 }
-#controls button:hover { background: #555; }
+.choice:hover:not(:disabled) { border-color: #3f7bd1; }
+.choice:disabled { cursor: default; opacity: 0.4; }
+.choice .price {
+    position: absolute;
+    right: 8%;
+    bottom: 2%;
+    font-size: calc(var(--row-item) * 0.24);
+    font-weight: bold;
+    color: #2a5ca6;
+    text-shadow: none;
+}
 
+/* Game buttons: squircles the size of the side bar, with a drawn icon */
 .icon-button {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 48px;
-    height: 48px;
-    padding: 0 !important;
-    border-radius: 10px;
+    width: var(--slot);
+    height: var(--slot);
+    padding: 0;
+    background: #444;
+    color: white;
+    border: none;
+    border-radius: 32%;
+    cursor: pointer;
 }
+.icon-button:hover:not(:disabled) { background: #555; }
+.icon-button:disabled { opacity: 0.45; cursor: default; }
 .icon-button svg {
-    width: 26px;
-    height: 26px;
+    width: 48%;
+    height: 48%;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -132,25 +173,6 @@ body {
 #sound .sound-off { display: none; }
 #sound.muted .sound-off { display: inline; }
 #sound.muted .sound-on { display: none; }
-
-/* Room for one row of choices (promotion or conversion), reserved even when empty */
-#choices {
-    min-height: 60px;
-    margin: 6px 0 10px;
-    display: flex;
-    align-items: center;
-}
-#promotion { display: flex; align-items: center; gap: 6px; color: #ccc; }
-#promotion[hidden] { display: none; }
-#promotion button {
-    width: 60px;
-    height: 60px;
-    font-size: 40px;
-    background: #EEEED2;
-    border: none;
-    cursor: pointer;
-}
-#promotion button:hover { background: #f6f669; }
 
 #rules {
     width: var(--board-width);
@@ -167,10 +189,10 @@ body {
 }
 #settings select { margin-left: 6px; }
 
-#controls button:disabled { opacity: 0.45; cursor: default; }
 
 /* Side bar beside the board, positioned so the board itself stays centered (on wide screens).
-   It spans the board's height: each player's card at their edge, the turn light in the middle. */
+   It spans the board's height: game buttons at the top, the turn light in the middle,
+   and a slot for items at the bottom. */
 #board-area { position: relative; }
 #side-bar {
     position: absolute;
@@ -182,12 +204,12 @@ body {
     justify-content: space-between;
     align-items: center;
 }
-.side-card, #turn-light {
+#game-buttons, #turn-light {
     display: flex;
     flex-direction: column;
     gap: var(--light-gap);
 }
-/* Only the turn light has a housing; the player squircles match its width. */
+/* The turn light has a housing; the buttons and slots match its width. */
 #turn-light {
     padding: var(--light-pad);
     background: #333;
@@ -219,14 +241,6 @@ body {
 #turn-marker.black { background-color: #111; border-color: #777; }
 #turn-marker.draw { background-color: #888; border-color: #999; }
 
-/* Ruler names above and below the board */
-.ruler-label {
-    width: var(--board-width);
-    margin: 6px 0;
-    color: #bbb;
-    font-size: 20px;
-}
-
 /* A Necromancer's king glows faintly purple */
 .ruler-necromancer { text-shadow: 0 0 6px #a35cff, 0 0 2px #000; }
 
@@ -242,8 +256,9 @@ body {
 }
 
 .slot {
-    width: var(--slot);
-    height: var(--slot);
+    --size: var(--slot);
+    width: var(--size);
+    height: var(--size);
     box-sizing: border-box;
     border-radius: 32%;
     display: flex;
@@ -254,56 +269,31 @@ body {
 .material {
     background: #555;
     color: #eee;
-    font-size: calc(var(--slot) * 0.37);
+    font-size: calc(var(--size) * 0.37);
     font-weight: bold;
 }
 .ability.none { display: none; }
 .ability.necromancer {
     background: #9677cf;
     border: 2px solid #6b3fa0;
-    font-size: calc(var(--slot) * 0.7);
+    font-size: calc(var(--size) * 0.7);
 }
 .ability.locked { color: rgba(0, 0, 0, 0); }
 .ability.locked.white-piece { text-shadow: 0 0 0 rgba(255, 255, 255, 0.55), 0 0 2px rgba(0, 0, 0, 0.4); }
 .ability.locked.black-piece { text-shadow: 0 0 0 rgba(0, 0, 0, 0.4); }
 .ability.open { box-shadow: 0 0 10px 2px rgba(163, 92, 255, 0.7); }
 .ability.clickable { cursor: pointer; }
+#item-slot { border: 2px dashed #444; }
 
-/* The Alchemist's budget: a blue squircle in the side bar */
+/* The Alchemist's budget: a blue squircle */
 .ability.alchemist {
     background: #3f7bd1;
     border: 2px solid #2a5ca6;
     color: #fff;
-    font-size: calc(var(--slot) * 0.37);
+    font-size: calc(var(--size) * 0.37);
     font-weight: bold;
 }
 .ruler-alchemist { text-shadow: 0 0 6px #4a9bff, 0 0 2px #000; }
-
-/* Conversion choices under the board, each with its price in points */
-#convert { display: flex; align-items: center; gap: 6px; color: #ccc; }
-#convert[hidden] { display: none; }
-.choice-label { margin-right: 4px; font-size: 14px; }
-.convert-choice {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    font-size: 34px;
-    background: #EEEED2;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.convert-choice:hover:not(:disabled) { border-color: #3f7bd1; }
-.convert-choice:disabled { cursor: default; opacity: 0.4; }
-.convert-choice .price {
-    position: absolute;
-    right: 2px;
-    bottom: 0;
-    font-size: 12px;
-    font-weight: bold;
-    color: #2a5ca6;
-    text-shadow: none;
-}
 
 /* Main menu: a row of ruler cards (playing-card proportions) and the start text */
 #menu {

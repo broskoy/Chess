@@ -1,10 +1,10 @@
 // Main menu: choose a ruler from a row of cards, then start a game.
-// The card art is a placeholder symbol for now.
 
+import { RULER_INFO } from './rulers.js';
+
+// One card per ruler, plus a locked placeholder for rulers to come.
 const RULER_CARDS = [
-    { ruler: 'king', name: 'King', art: '♔', accent: '#d9b44a' },
-    { ruler: 'necromancer', name: 'Necromancer', art: '☠', accent: '#9677cf' },
-    { ruler: 'alchemist', name: 'Alchemist', art: '⚗', accent: '#3f7bd1' },
+    ...Object.entries(RULER_INFO).map(([ruler, info]) => ({ ruler, ...info })),
     { ruler: null, name: 'Coming soon', art: '?', accent: '#666' },
 ];
 

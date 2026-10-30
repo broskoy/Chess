@@ -11,13 +11,10 @@ Chess, but each side's king is a **ruler** with a special power. If you know che
 - **No en passant.** Pawns can only capture diagonally onto the square where the enemy piece stands.
 - **Castling** works as usual. Your ruler can't castle out of, through, or into an attacked square.
 
-## The bar beside the board
+## Around the board
 
-The bar to the right of the board is mirrored: the card at the top belongs to the player at the top, the card at the bottom to the player at the bottom.
-
-- **Gray boxes** show each side's total material on the board (pawn 1, knight 3, bishop 3, rook 5, queen 9).
-- **Ruler boxes** show what each ruler's power has ready (for example, the Necromancer's grave).
-- **The light** in the middle slides toward whoever's turn it is, and takes their color. When the game ends, it stays with the winner.
+- **Your row** is below the board, your opponent's is above it. From the left: the ruler's icon, the **gray box** with total material on the board (pawn 1, knight 3, bishop 3, rook 5, queen 9), and the ruler's power box (for example, the Necromancer's grave).
+- **The bar on the right** has the main menu, restart, undo and sound buttons. **The light** in the middle slides toward whoever's turn it is, and takes their color. When the game ends, it stays with the winner.
 
 ## The rulers
 
@@ -36,7 +33,7 @@ Raises fallen enemies to fight for you.
 - You can only raise **enemy pieces**. If the most recent piece to die was yours, the grave is useless to you until the next capture.
 - The grave square must be **empty**. Right after a capture, the capturing piece is standing on the grave, so it's blocked until that piece moves away.
 - A raised pawn has already used its first move, so it can't move two squares.
-- Your purple box in the side bar shows the piece you could raise. It's faded while the grave is blocked, and glows when you can raise it.
+- The purple box in your row shows the piece you could raise. It's faded while the grave is blocked, and glows when you can raise it.
 - When you can raise a piece, the grave's border pulses. Click the grave or your purple box to raise.
 
 **Tips for playing the Necromancer**
@@ -64,10 +61,10 @@ Turns pieces into other pieces using a budget of points.
   - **Downgrading** earns the difference. A rook becoming a knight earns 2 points.
   - **Upgrading** costs the difference. A pawn becoming a bishop costs 2 points.
   - **Swapping** between equal pieces (knight and bishop) is free, but still uses your turn.
-- Your budget is the **blue box** in the side bar. You usually start with 0, so your first conversion has to be a downgrade.
+- Your budget is the **blue box** in your row. You usually start with 0, so your first conversion has to be a downgrade.
 - **New pawns** can only be made in your own half of the board.
 - A converted piece counts as having moved, so a new pawn can't move two squares.
-- Select one of your pieces to see the **Convert to:** row under the board, with the price of each option. Greyed-out options aren't allowed right now; hover over one to see why.
+- The **conversion buttons** in your row light up when you select one of your pieces, each with its price. Greyed-out options aren't allowed right now; hover over one to see why.
 
 **Tips for playing the Alchemist**
 
