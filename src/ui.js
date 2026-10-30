@@ -139,7 +139,6 @@ class ChessUI {
         this.renderRulerLabel(this.elements.rulerTop, opponent(this.bottomColor));
         this.renderRulerLabel(this.elements.rulerBottom, this.bottomColor);
         this.renderSideBar();
-        this.elements.status.textContent = this.statusText();
         this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
         this.renderConvertChoices();
@@ -272,7 +271,7 @@ class ChessUI {
         if (!show) return;
 
         const label = document.createElement('span');
-        label.className = 'convert-label';
+        label.className = 'choice-label';
         label.textContent = 'Convert to:';
         element.appendChild(label);
 
@@ -307,6 +306,10 @@ class ChessUI {
         element.hidden = !this.promotionChoices;
         if (!this.promotionChoices) return;
 
+        const label = document.createElement('span');
+        label.className = 'choice-label';
+        label.textContent = 'Promote to:';
+        element.appendChild(label);
         for (const move of this.promotionChoices) {
             const button = document.createElement('button');
             button.textContent = SYMBOLS[`${this.state.turn}-${move.promotion}`];
@@ -315,17 +318,6 @@ class ChessUI {
             button.onclick = () => this.play(move);
             element.appendChild(button);
         }
-    }
-
-    statusText() {
-        const { result, winner, inCheck } = this.status;
-        if (this.promotionChoices) return 'Promote to:';
-        if (result === 'king-captured') return `${capitalize(winner)} captured the king and wins.`;
-        if (result === 'no-moves') return `${capitalize(opponent(winner))} has no moves. ${capitalize(winner)} wins.`;
-        if (result === 'checkmate') return `Checkmate. ${capitalize(winner)} wins.`;
-        if (result === 'stalemate') return 'Stalemate. Draw.';
-        const raise = this.resurrectMove() ? ' Click the grave to raise its piece.' : '';
-        return `${capitalize(this.state.turn)} to move${inCheck ? ' (check)' : ''}.${raise}`;
     }
 }
 
@@ -389,7 +381,6 @@ const ui = new ChessUI({
     abilityBottom: document.getElementById('ability-bottom'),
     rulerTop: document.getElementById('ruler-top'),
     rulerBottom: document.getElementById('ruler-bottom'),
-    status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
     convert: document.getElementById('convert'),
     undo: document.getElementById('undo'),

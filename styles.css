@@ -48,7 +48,6 @@ body {
     border-radius: 50%;
 }
 
-#status { color: #ccc; margin: 12px 0 8px; }
 
 #controls {
     display: flex;
@@ -66,7 +65,7 @@ body {
 }
 #controls button:hover { background: #555; }
 
-#promotion { display: flex; gap: 6px; margin-bottom: 10px; }
+#promotion { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #ccc; }
 #promotion[hidden] { display: none; }
 #promotion button {
     width: 60px;
@@ -220,7 +219,7 @@ body {
 /* Conversion choices under the board, each with its price in points */
 #convert { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: #ccc; }
 #convert[hidden] { display: none; }
-.convert-label { margin-right: 4px; font-size: 14px; }
+.choice-label { margin-right: 4px; font-size: 14px; }
 .convert-choice {
     position: relative;
     width: 52px;

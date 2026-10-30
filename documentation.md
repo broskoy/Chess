@@ -118,6 +118,11 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] UI: selecting an Alchemist's piece shows a "Convert to:" row with prices; blue budget squircle in the side bar; starting budget in the Rules panel; conversion sound
 - [x] Tests
 
+### Home screen
+- [ ] Choose rulers (and the Alchemist's starting budget) on a home screen before a game, instead of changing rules mid-game
+- [x] Rules panel hidden in the meantime (the rulers saved in the browser stay in effect)
+- Later: mode choice (vs bot / two players), rounds
+
 ### Phase 4 — Bot
 - [ ] Alpha-beta search a few moves deep with a material-based evaluation, running in the browser
 - [ ] Understand ruler abilities (they're just extra move types for the search; evaluation may need hints, e.g. the value of an open grave or of unspent budget)
@@ -133,7 +138,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Turn indicator ("stoplight" beside the board): one marker slides to the side to move, changing from white through gray to black. No glow (a glowing black light looked odd). At game end it stays with the winner; on a draw it parks in the middle in gray
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
 - [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
-- [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser)
+- [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser) — now hidden, see Home screen
+- [x] No status line: the turn light, the red ruler square and the grave glow already show what it said
 - [x] Resurrect sound
 - [x] Last move highlighted on the board (for a resurrection, the square where the piece rose)
 - [x] Side bar beside the board, as separate pieces spanning the board's height: each player's card (material, ruler ability box) at their edge of the board, the turn light in the middle
