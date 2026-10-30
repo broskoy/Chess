@@ -187,13 +187,19 @@ class ChessUI {
         }
     }
 
-    // The grave is marked with a skull. While it's open, a faded ghost shows the piece that would rise.
+    // The grave has a purple border, even with a piece standing on it. While it's
+    // open, a faded ghost shows the dead piece; when the side to move can raise it,
+    // the ghost takes their color (the color it would rise as) and the border pulses.
     decorateGrave(tile, piece, canRaise) {
         tile.classList.add('grave');
         if (piece) return;
         const dead = this.state.grave.piece;
-        tile.textContent = SYMBOLS[`${dead.color}-${dead.type}`];
-        tile.classList.add('ghost', `${dead.color}-piece`);
+        const color = canRaise ? this.state.turn : dead.color;
+        // The ghost is its own element so fading it doesn't fade the square.
+        const ghost = document.createElement('span');
+        ghost.className = `ghost ${color}-piece`;
+        ghost.textContent = SYMBOLS[`${color}-${dead.type}`];
+        tile.appendChild(ghost);
         if (canRaise) {
             tile.classList.add('can-raise');
             tile.title = `Raise the ${dead.type}`;

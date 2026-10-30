@@ -169,27 +169,16 @@ body {
 /* A Necromancer's king glows faintly purple */
 .ruler-necromancer { text-shadow: 0 0 6px #a35cff, 0 0 2px #000; }
 
-/* The grave: a skull in the corner, plus a faded ghost of the dead piece while it's open */
-.grave { position: relative; }
-.grave::before {
-    content: '☠';
-    position: absolute;
-    top: 1px;
-    left: 3px;
-    font-size: 14px;
-    color: #6b3fa0;
-    text-shadow: none;
-}
-.ghost { opacity: 0.35; }
-.can-raise {
-    opacity: 1;
-    color: transparent;
-    text-shadow: 0 0 0 rgba(107, 63, 160, 0.55);
-    animation: raise-pulse 1.4s ease-in-out infinite;
-}
+/* The grave: a purple border on its square, shown even when a piece stands on it.
+   While it's open, a faded ghost of the dead piece shows what would rise. */
+.grave { box-shadow: inset 0 0 0 calc(var(--tile) * 0.05) rgba(150, 90, 230, 0.9); }
+.ghost { opacity: 0.4; }
+.can-raise .ghost { opacity: 0.7; }
+.can-raise { animation: raise-pulse 1.4s ease-in-out infinite; }
 @keyframes raise-pulse {
-    0%, 100% { box-shadow: inset 0 0 0 3px rgba(163, 92, 255, 0.35); }
-    50% { box-shadow: inset 0 0 0 3px rgba(163, 92, 255, 0.9); }
+    0%, 100% { box-shadow: inset 0 0 0 calc(var(--tile) * 0.05) rgba(150, 90, 230, 0.9); }
+    50% { box-shadow: inset 0 0 0 calc(var(--tile) * 0.09) rgba(170, 110, 255, 1); }
+}
 }
 
 .slot {

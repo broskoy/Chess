@@ -111,7 +111,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Each side has a ruler type (settings `whiteRuler` / `blackRuler`: plain king, Necromancer, later Alchemist)
 - [x] Track the grave: square and dead piece, updated on every capture
 - [x] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
-- [x] Show the grave on the board (skull marker; a faded ghost of the dead piece while it's open, pulsing when you can raise it). Click the open grave to resurrect
+- [x] Show the grave on the board (purple border, also while a piece stands on it; a faded ghost of the dead piece while it's open, in the color it would rise as and with a pulsing border when you can raise it). Click the open grave to resurrect
 - [x] Choose each side's ruler in the Rules panel (two players on one screen until the bot exists); ruler names shown above and below the board
 - [x] Tests for grave tracking, blocking, resurrection colors
 

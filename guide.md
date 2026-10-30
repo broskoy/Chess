@@ -31,13 +31,13 @@ Raises fallen enemies to fight for you.
 
 **How it works**
 
-- The square where the **most recent piece died** is the **grave** (marked with ☠). There's only one grave. Every new capture moves it.
+- The square where the **most recent piece died** is the **grave** (marked with a purple border). There's only one grave. Every new capture moves it.
 - On your turn, instead of moving, you can **raise** the piece in the grave. It comes back on that square, on your side.
 - You can only raise **enemy pieces**. If the most recent piece to die was yours, the grave is useless to you until the next capture.
 - The grave square must be **empty**. Right after a capture, the capturing piece is standing on the grave, so it's blocked until that piece moves away.
 - A raised pawn has already used its first move, so it can't move two squares.
 - Your purple box in the side bar shows the piece you could raise. It's faded while the grave is blocked, and glows when you can raise it.
-- When you can raise a piece, the grave glows purple. Click the grave or your purple box to raise.
+- When you can raise a piece, the grave's border pulses. Click the grave or your purple box to raise.
 
 **Tips for playing the Necromancer**
 
