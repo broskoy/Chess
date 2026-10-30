@@ -172,6 +172,9 @@ body {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+#copy-game .copied-icon { display: none; }
+#copy-game.copied .copied-icon { display: inline; }
+#copy-game.copied .copy-icon { display: none; }
 #sound .sound-off { display: none; }
 #sound.muted .sound-off { display: inline; }
 #sound.muted .sound-on { display: none; }

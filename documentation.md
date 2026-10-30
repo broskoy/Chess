@@ -163,6 +163,7 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
   - A plain King has no ability box
   - Alchemist box: budget in blue
 - [x] Side bar beside the board, spanning its height, for general controls: home, restart, undo and mute at the top, the turn light in the middle, and 4 empty slots for items at the bottom (symmetric, so the light sits in the middle). Its squircles scale with the board so it always fits beside it
+- [x] Copy game button (testing tool, in the first item slot for now): copies the game so far in the PGN-like format of [src/notation.js](src/notation.js) — headers with the rulers and rules, then coordinate moves (`e2e4`, `N@d5` for a resurrection, `d4=B` for a conversion). Paste it to share a position for debugging
 - [ ] In-game guide: a booklet icon that opens [guide.md](guide.md)
 - Later: piece images instead of Unicode, ruler artwork
 
@@ -182,6 +183,7 @@ Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only u
 - [src/menu.js](src/menu.js): the main menu (ruler cards and start text).
 - [src/bot.js](src/bot.js): the computer opponent (random, greedy, and the search it plays with).
 - [src/bot-worker.js](src/bot-worker.js): runs the bot's search in a background thread.
+- [src/notation.js](src/notation.js): writing games as text (PGN-like) and replaying them.
 - [src/rulers.js](src/rulers.js): each ruler's name, placeholder art and color, shared by the menu and the game.
 - [test/engine.test.js](test/engine.test.js): engine tests, including perft (counting positions to a fixed depth, the standard check for move generation).
 

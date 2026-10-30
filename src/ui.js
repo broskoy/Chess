@@ -6,6 +6,7 @@ import {
 import { sounds } from './sound.js';
 import { setupMenu } from './menu.js';
 import { RULER_INFO } from './rulers.js';
+import { gameToText } from './notation.js';
 // The bot never answers faster than this, so its move doesn't appear instantly.
 const BOT_DELAY_MS = 500;
 
@@ -477,6 +478,21 @@ document.getElementById('to-menu').onclick = () => {
     showScreen(menuScreen);
 };
 showScreen(menuScreen);
+
+// Copies the game so far (rulers and every move) to the clipboard, e.g. to share a
+// position for debugging. The icon turns into a check mark for a moment. If the
+// clipboard isn't available, the text is shown in a box to copy from instead.
+const copyButton = document.getElementById('copy-game');
+copyButton.onclick = async () => {
+    const text = gameToText(ui.history[0].settings, ui.moves);
+    try {
+        await navigator.clipboard.writeText(text);
+        copyButton.classList.add('copied');
+        setTimeout(() => copyButton.classList.remove('copied'), 1500);
+    } catch {
+        window.prompt('Copy this game:', text);
+    }
+};
 
 // The speaker icon gets a diagonal line through it while muted.
 const soundButton = document.getElementById('sound');
