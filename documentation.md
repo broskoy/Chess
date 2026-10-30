@@ -143,7 +143,8 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Published on GitHub Pages: https://broskoy.github.io/Chess/ (serves `main` as static files; every push updates it)
 - [x] Turn indicator ("stoplight" beside the board): one marker slides to the side to move, changing from white through gray to black. No glow (a glowing black light looked odd). At game end it stays with the winner; on a draw it parks in the middle in gray
 - [x] Sounds (synthesized in the browser, no audio files; on/off toggle remembered in the browser)
-- [x] Flip board button. No auto-flip each turn: tried it, and a board that spins every move felt disorienting.
+- [x] Icon buttons under the board: house (main menu), circular arrow (restart), curved arrow (undo), speaker (sound; a diagonal line through it when muted). Drawn by hand as inline SVG, so there's no icon license to track
+- Removed the flip board button (not needed once you always play from your own side). The board can still be drawn with black at the bottom, for playing the bot as black later. Auto-flip each turn was tried earlier and felt disorienting.
 - [x] Rules panel ("Rules" under the board; changes apply to the current game and are remembered in the browser) — now hidden, see Home screen
 - [x] No status line: the turn light, the red ruler square and the grave glow already show what it said
 - [x] Board scales with the window (squares 40-80px on wide screens)

@@ -30,7 +30,6 @@
     /* The extra right padding shifts the game left by half the side bar's width. */
     #game { padding-right: calc(var(--bar-gap) + var(--slot)); }
     #controls { flex-wrap: wrap; justify-content: center; }
-    #controls button { padding: 8px 12px; font-size: 15px; }
 }
 
 /* Phones wait ~300ms after a tap to see if it's a double-tap zoom before sending the
@@ -111,6 +110,28 @@ body {
     cursor: pointer;
 }
 #controls button:hover { background: #555; }
+
+.icon-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0 !important;
+    border-radius: 10px;
+}
+.icon-button svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#sound .sound-off { display: none; }
+#sound.muted .sound-off { display: inline; }
+#sound.muted .sound-on { display: none; }
 
 /* Room for one row of choices (promotion or conversion), reserved even when empty */
 #choices {

@@ -47,11 +47,6 @@ class ChessUI {
         this.newGame();
     }
 
-    flip() {
-        this.bottomColor = opponent(this.bottomColor);
-        this.render();
-    }
-
     get state() {
         return this.history[this.history.length - 1];
     }
@@ -405,7 +400,6 @@ const ui = new ChessUI({
 }, loadSettings());
 document.getElementById('restart').onclick = () => ui.newGame();
 document.getElementById('undo').onclick = () => ui.undo();
-document.getElementById('flip').onclick = () => ui.flip();
 document.addEventListener('keydown', event => {
     if (gameScreen.hidden) return;
     if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
@@ -438,8 +432,14 @@ setupMenu({
 document.getElementById('to-menu').onclick = () => showScreen(menuScreen);
 showScreen(menuScreen);
 
+// The speaker icon gets a diagonal line through it while muted.
 const soundButton = document.getElementById('sound');
-const showSound = () => { soundButton.textContent = ui.soundOn ? 'Sound on' : 'Sound off'; };
+const showSound = () => {
+    soundButton.classList.toggle('muted', !ui.soundOn);
+    const label = ui.soundOn ? 'Sound on (click to mute)' : 'Sound off (click to unmute)';
+    soundButton.title = label;
+    soundButton.setAttribute('aria-label', label);
+};
 ui.soundOn = loadStored(SOUND_KEY, true);
 showSound();
 soundButton.onclick = () => {
