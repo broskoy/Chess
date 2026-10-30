@@ -123,7 +123,7 @@ These carry over from standard chess, with a few deliberate changes.
 ### Main menu
 - [x] Ruler cards in playing-card proportions (5:7) with placeholder art: King, Necromancer, Alchemist, and a locked "Coming soon" card. Cards lift and light up in the ruler's color on hover
 - [x] "Start as the ___": hovering a card fades in its name; clicking a card selects it; clicking the text starts. Two steps because phones have no hover, so a tap only selects
-- [x] The player is white against a plain King for now. Menu button in the game to go back; the last ruler is pre-selected
+- [x] The player is white against a plain King for now. Menu button in the game to go back. The name shows "..." until a card is hovered or chosen; nothing is pre-selected
 - [x] Rules panel stays hidden (rulers are chosen in the menu, not mid-game)
 - [ ] Sound and navigation reachable from every screen (proposal: a corner menu button opening an overlay with Sound, Main menu, Resume; Esc opens it on desktop)
 - [ ] Card artwork

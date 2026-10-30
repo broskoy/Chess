@@ -428,7 +428,6 @@ setupMenu({
     cardsElement: document.getElementById('ruler-cards'),
     startButton: document.getElementById('start-game'),
     startName: document.getElementById('start-name'),
-    initialRuler: ui.settings.whiteRuler,
     onStart(ruler) {
         const settings = { ...ui.settings, whiteRuler: ruler, blackRuler: 'king' };
         saveStored(SETTINGS_KEY, settings);

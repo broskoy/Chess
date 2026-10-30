@@ -10,10 +10,13 @@ const RULER_CARDS = [
 
 const FADE_MS = 150;
 
-// Hovering a card previews its name in "Start as the ___"; clicking selects it, and the
-// start text starts the game. Phones have no hover, so a tap selects without starting.
-export function setupMenu({ cardsElement, startButton, startName, initialRuler, onStart }) {
-    let selected = RULER_CARDS.find(card => card.ruler === initialRuler && card.ruler !== null) ?? null;
+const BLANK = '...';
+
+// "Start as the ..." shows a card's name while hovering it; clicking a card selects it,
+// and the start text starts the game. Phones have no hover, so a tap selects without
+// starting. Nothing is selected at first.
+export function setupMenu({ cardsElement, startButton, startName, onStart }) {
+    let selected = null;
     let shown = null;
     let fadeTimer = null;
 
@@ -25,7 +28,7 @@ export function setupMenu({ cardsElement, startButton, startName, initialRuler, 
         clearTimeout(fadeTimer);
         startName.classList.add('fading');
         fadeTimer = setTimeout(() => {
-            startName.textContent = card ? card.name : '___';
+            startName.textContent = card ? card.name : BLANK;
             startButton.style.setProperty('--accent', card ? card.accent : '');
             startName.classList.remove('fading');
         }, FADE_MS);
@@ -52,17 +55,13 @@ export function setupMenu({ cardsElement, startButton, startName, initialRuler, 
                 startButton.disabled = false;
                 showName(card);
             };
-            if (card === selected) button.classList.add('selected');
         }
         cardsElement.appendChild(button);
     }
 
-    startButton.disabled = selected === null;
+    startButton.disabled = true;
     startButton.onclick = () => {
         if (selected) onStart(selected.ruler);
     };
-    // Show the initial name without a fade.
-    shown = selected;
-    startName.textContent = selected ? selected.name : '___';
-    startButton.style.setProperty('--accent', selected ? selected.accent : '');
+    startName.textContent = BLANK;
 }
