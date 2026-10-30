@@ -1,7 +1,7 @@
-/* Square size: as large as the window allows, leaving about 230px of height for the
+/* Square size: as large as the window allows, leaving about 250px of height for the
    labels, choices row and buttons, and room beside the board for the side bar. */
 :root {
-    --tile: clamp(40px, min(calc((100vh - 230px) / 8), calc((100vw - 200px) / 8)), 80px);
+    --tile: clamp(40px, min(calc((100vh - 250px) / 8), calc((100vw - 200px) / 8)), 80px);
     --board-width: calc(var(--tile) * 8 + 10px);   /* including the 5px border */
 }
 
@@ -67,7 +67,8 @@ body {
     background: #444;
     color: white;
     border: none;
-    padding: 6px 14px;
+    padding: 8px 18px;
+    font-size: 16px;
     cursor: pointer;
 }
 #controls button:hover { background: #555; }
@@ -163,7 +164,7 @@ body {
     width: var(--board-width);
     margin: 6px 0;
     color: #bbb;
-    font-size: 14px;
+    font-size: 20px;
 }
 
 /* A Necromancer's king glows faintly purple */

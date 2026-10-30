@@ -207,7 +207,7 @@ class ChessUI {
     }
 
     renderRulerLabel(element, color) {
-        element.textContent = `${capitalize(color)}: ${RULER_NAMES[rulerOf(this.state, color)]}`;
+        element.textContent = RULER_NAMES[rulerOf(this.state, color)];
     }
 
     // The bar beside the board, mirrored for each side: material, ruler ability, turn light.
