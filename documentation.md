@@ -132,7 +132,7 @@ These carry over from standard chess, with a few deliberate changes.
 ### Phase 4 — Bot
 Built in steps that are each playable. The bot ([src/bot.js](src/bot.js)) only uses the engine, so it also runs in Node.
 - [x] Random bot: plays black (a plain King) and picks any legal move after a short pause. Undo takes back both its reply and your move
-- [ ] Greedy bot: takes the best capture available
+- [x] Greedy bot: takes the most valuable capture available (the ruler above all), otherwise a random move
 - [ ] Search a few moves deep (alpha-beta) with a material-based evaluation, in a Web Worker so the page doesn't freeze
 - [ ] Teach it the rulers. Resurrecting and converting are already moves, so the search sees what they do; what it can't see is *potential* (an open grave, a piece tied to the grave, unspent points). Those values start at 0
 - [ ] Difficulty levels (how deep it looks)
