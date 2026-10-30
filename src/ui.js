@@ -54,6 +54,15 @@ class ChessUI {
         this.update();
     }
 
+    undo() {
+        if (this.history.length === 1) return;
+        this.history.pop();
+        // Keep the current rules even if they changed after this position was played.
+        this.history[this.history.length - 1] = { ...this.state, settings: this.settings };
+        this.clearSelection();
+        this.update();
+    }
+
     clearSelection() {
         this.selected = null;           // board square of the selected piece
         this.selectedDrop = null;       // piece type selected in the hand
@@ -112,6 +121,7 @@ class ChessUI {
         this.renderHand(this.elements.handTop, opponent(this.bottomColor));
         this.renderHand(this.elements.handBottom, this.bottomColor);
         this.elements.status.textContent = this.statusText();
+        this.elements.undo.disabled = this.history.length === 1;
         this.renderPromotionChoices();
     }
 
@@ -248,7 +258,15 @@ const ui = new ChessUI({
     handBottom: document.getElementById('hand-bottom'),
     status: document.getElementById('status'),
     promotion: document.getElementById('promotion'),
+    undo: document.getElementById('undo'),
 }, loadSettings());
 document.getElementById('restart').onclick = () => ui.newGame();
+document.getElementById('undo').onclick = () => ui.undo();
 document.getElementById('flip').onclick = () => ui.flip();
+document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+        event.preventDefault();
+        ui.undo();
+    }
+});
 bindSettingsForm(document.getElementById('settings'), ui);
