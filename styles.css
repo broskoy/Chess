@@ -333,35 +333,30 @@ body {
 }
 .card-art { font-size: calc(var(--card-width) * 0.42); color: var(--accent); line-height: 1; }
 .card-name { font-size: calc(var(--card-width) * 0.1); }
-/* Only devices with a real pointer get hover effects; on phones they would stick after a tap. */
+/* Previewing a card: it grows and glows in its ruler's color. Only devices with a real
+   pointer get the hover version; on phones it would stick after a tap. */
+.ruler-card:not(.locked):focus-visible {
+    outline: none;
+    transform: translateY(-8px) scale(1.06);
+    border-color: var(--accent);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent);
+}
 @media (hover: hover) {
     .ruler-card:not(.locked):hover {
-        transform: translateY(-8px);
+        transform: translateY(-8px) scale(1.06);
         border-color: var(--accent);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent);
     }
-}
-.ruler-card.selected {
-    transform: translateY(-8px);
-    border-color: var(--accent);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45), 0 0 16px var(--accent);
 }
 .ruler-card.locked { opacity: 0.4; cursor: default; }
 
-#start-game {
-    background: none;
-    border: none;
+#start-text {
+    margin: 0;
     color: #ddd;
-    font-family: inherit;
     font-size: clamp(22px, 3vw, 32px);
-    cursor: pointer;
 }
-#start-game:disabled { color: #777; cursor: default; }
 #start-name {
     color: var(--accent, inherit);
     transition: opacity 0.15s ease;
 }
 #start-name.fading { opacity: 0; }
-@media (hover: hover) {
-    #start-game:not(:disabled):hover #start-name { text-decoration: underline; }
-}

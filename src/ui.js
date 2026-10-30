@@ -421,7 +421,7 @@ function showScreen(screen) {
 // For now the player is always white, against a plain King.
 setupMenu({
     cardsElement: document.getElementById('ruler-cards'),
-    startButton: document.getElementById('start-game'),
+    startText: document.getElementById('start-text'),
     startName: document.getElementById('start-name'),
     onStart(ruler) {
         const settings = { ...ui.settings, whiteRuler: ruler, blackRuler: 'king' };

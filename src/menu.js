@@ -12,11 +12,9 @@ const FADE_MS = 150;
 
 const BLANK = '...';
 
-// "Start as the ..." shows a card's name while hovering it; clicking a card selects it,
-// and the start text starts the game. Phones have no hover, so a tap selects without
-// starting. Nothing is selected at first.
-export function setupMenu({ cardsElement, startButton, startName, onStart }) {
-    let selected = null;
+// Hovering (or focusing) a card previews it: the card lifts and glows, and its name
+// fades into "Start as the ...". Clicking a card starts the game with that ruler.
+export function setupMenu({ cardsElement, startName, startText, onStart }) {
     let shown = null;
     let fadeTimer = null;
 
@@ -29,7 +27,7 @@ export function setupMenu({ cardsElement, startButton, startName, onStart }) {
         startName.classList.add('fading');
         fadeTimer = setTimeout(() => {
             startName.textContent = card ? card.name : BLANK;
-            startButton.style.setProperty('--accent', card ? card.accent : '');
+            startText.style.setProperty('--accent', card ? card.accent : '');
             startName.classList.remove('fading');
         }, FADE_MS);
     }
@@ -46,22 +44,11 @@ export function setupMenu({ cardsElement, startButton, startName, onStart }) {
             button.classList.add('locked');
             button.disabled = true;
         } else {
-            button.onmouseenter = () => showName(card);
-            button.onmouseleave = () => showName(selected);
-            button.onclick = () => {
-                selected = card;
-                for (const other of cardsElement.children) other.classList.remove('selected');
-                button.classList.add('selected');
-                startButton.disabled = false;
-                showName(card);
-            };
+            button.onmouseenter = button.onfocus = () => showName(card);
+            button.onmouseleave = button.onblur = () => showName(null);
+            button.onclick = () => onStart(card.ruler);
         }
         cardsElement.appendChild(button);
     }
-
-    startButton.disabled = true;
-    startButton.onclick = () => {
-        if (selected) onStart(selected.ruler);
-    };
     startName.textContent = BLANK;
 }
