@@ -34,10 +34,10 @@ console.log('   a b c d e f g h\n');
 for (const color of ['white', 'black']) {
     const ruler = rulerOf(state, color);
     const points = ruler === 'alchemist' ? `, ${state.budget[color]} points` : '';
-    console.log(`${color}: ${ruler}${points}`);
+    const grave = state.graves[color];
+    const raise = grave ? `, grave: ${grave.piece.type} on ${squareName(grave)}` : '';
+    console.log(`${color}: ${ruler}${points}${raise}`);
 }
-const { grave } = state;
-console.log(`grave: ${grave ? `${grave.piece.color} ${grave.piece.type} on ${squareName(grave)}` : 'none'}`);
 console.log(`to move: ${state.turn}\n`);
 
 const stats = {};

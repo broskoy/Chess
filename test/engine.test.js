@@ -152,18 +152,19 @@ test('there is no en passant', () => {
 const NECRO = { whiteRuler: 'necromancer' };
 const resurrect = state => getLegalMoves(state).find(m => m.type === 'resurrect');
 
-test('a capture leaves a grave under the capturing piece', () => {
-    const state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1');
+test("a Necromancer's capture leaves a grave under the capturing piece", () => {
+    const state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', NECRO);
     const next = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bb3xd5
-    assert.deepEqual(next.grave, { r: 3, c: 3, piece: state.board[3][3] });
+    assert.deepEqual(next.graves.white, { r: 3, c: 3, piece: state.board[3][3] });
 });
 
-test('only the most recent death is in the grave', () => {
-    let state = fromFEN('4k3/8/8/3n4/8/1B6/p7/R3K3 w - - 0 1');
+test('the grave holds the last piece the Necromancer captured', () => {
+    let state = fromFEN('4k3/8/8/3n4/8/1B6/p7/R3K3 w - - 0 1', NECRO);
     state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
     state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     state = applyMove(state, findMove(state, [7, 0], [6, 0]));  // Rxa2
-    assert.deepEqual([state.grave.r, state.grave.c, state.grave.piece.type], [6, 0, 'pawn']);
+    const { r, c, piece } = state.graves.white;
+    assert.deepEqual([r, c, piece.type], [6, 0, 'pawn']);
 });
 
 test('the grave is blocked until the capturer moves away', () => {
@@ -194,32 +195,38 @@ test('a Necromancer raises an enemy piece in their own color', () => {
     state = applyMove(state, findMove(state, [0, 3], [0, 2]));
     state = applyMove(state, resurrect(state));
     assert.deepEqual(state.board[3][3], { type: 'knight', color: 'white', hasMoved: true });
-    assert.equal(state.grave, null);
+    assert.equal(state.graves.white, null);
     assert.equal(state.turn, 'black');
 });
 
-test('a Necromancer cannot raise their own dead', () => {
-    // White's knight dies on d4; the grave holds it, but white can't raise it.
+test("losing a piece doesn't give the Necromancer a grave", () => {
     let state = fromFEN('4k3/8/8/2b5/3N4/8/8/4K3 b - - 0 1', NECRO);
     state = applyMove(state, findMove(state, [3, 2], [4, 3]));  // Bxd4
-    state = applyMove(state, findMove(state, [7, 4], [7, 3]));
-    state = applyMove(state, findMove(state, [4, 3], [5, 4]));  // bishop steps off
-    assert.equal(state.grave.piece.color, 'white');
+    assert.equal(state.graves.white, null);
     assert.equal(resurrect(state), undefined);
 });
 
-test('a new death replaces a grave the Necromancer wanted', () => {
-    // White's Necromancer wins a knight, but black takes a white pawn before it can rise.
+test("the opponent's captures can't replace the grave", () => {
+    // White's Necromancer wins a knight; black taking a white pawn doesn't change the grave.
     let state = fromFEN('4k2r/8/8/3n4/8/1B6/7P/4K3 w - - 0 1', NECRO);
     state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
     state = applyMove(state, findMove(state, [0, 4], [0, 3]));
     state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // bishop steps off
-    assert.equal(state.grave.piece.type, 'knight');
-    state = applyMove(state, findMove(state, [0, 7], [6, 7]));  // ...Rxh2: the grave now holds a white pawn
+    state = applyMove(state, findMove(state, [0, 7], [6, 7]));  // ...Rxh2
+    assert.equal(state.graves.white.piece.type, 'knight');
+    assert.ok(resurrect(state));
+});
+
+test('a recapture leaves the enemy piece tied to the grave', () => {
+    let state = fromFEN('4k3/8/4p3/3n4/8/1B6/8/4K3 w - - 0 1', NECRO);
+    state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
+    state = applyMove(state, findMove(state, [2, 4], [3, 3]));  // ...exd5: white's bishop dies on the grave
+    assert.equal(state.graves.white.piece.type, 'knight');
+    assert.equal(resurrect(state), undefined, 'the d5 pawn blocks it');
+
     state = applyMove(state, findMove(state, [7, 4], [7, 3]));
-    state = applyMove(state, findMove(state, [6, 7], [5, 7]));  // rook steps off
-    assert.equal(state.grave.piece.color, 'white');
-    assert.equal(resurrect(state), undefined);
+    state = applyMove(state, findMove(state, [3, 3], [4, 3]));  // the pawn leaves
+    assert.ok(resurrect(state));
 });
 
 test('a raised pawn has no double step', () => {
@@ -235,21 +242,24 @@ test('a raised pawn has no double step', () => {
     assert.equal(findMove(state, [4, 3], [2, 3]), undefined, 'no d4-d6');
 });
 
-test('with two Necromancers, only the side that did the killing can raise', () => {
-    let state = fromFEN('4k3/8/8/3n4/8/1B6/8/4K3 w - - 0 1', { whiteRuler: 'necromancer', blackRuler: 'necromancer' });
+test('two Necromancers each have their own grave', () => {
+    let state = fromFEN('4k3/8/4p3/3n4/8/1B6/8/4K3 w - - 0 1', { whiteRuler: 'necromancer', blackRuler: 'necromancer' });
     state = applyMove(state, findMove(state, [5, 1], [3, 3]));  // Bxd5
-    state = applyMove(state, findMove(state, [0, 4], [0, 3]));
-    state = applyMove(state, findMove(state, [3, 3], [2, 4]));  // white steps off, black moves next
-    assert.equal(resurrect(state), undefined, 'black cannot raise its own knight');
-    state = applyMove(state, findMove(state, [0, 3], [0, 2]));
+    state = applyMove(state, findMove(state, [2, 4], [3, 3]));  // ...exd5
+    assert.equal(state.graves.white.piece.type, 'knight');
+    assert.equal(state.graves.black.piece.type, 'bishop');
+
+    state = applyMove(state, findMove(state, [7, 4], [7, 3]));
+    state = applyMove(state, findMove(state, [3, 3], [4, 3]));  // the pawn leaves, opening both
+    state = applyMove(state, findMove(state, [7, 3], [7, 2]));  // white doesn't raise
     state = applyMove(state, resurrect(state));
-    assert.equal(state.board[3][3].color, 'white');
+    assert.deepEqual(state.board[3][3], { type: 'bishop', color: 'black', hasMoved: true });
 });
 
 test('under standard rules, a resurrection can block check', () => {
     // White's Necromancer on e1 is checked along the first rank; the grave is on c1.
     const state = fromFEN('4k3/8/8/8/8/8/8/r3K3 w - - 0 1', { ...STANDARD, ...NECRO });
-    state.grave = { r: 7, c: 2, piece: { type: 'knight', color: 'black', hasMoved: true } };
+    state.graves.white = { r: 7, c: 2, piece: { type: 'knight', color: 'black', hasMoved: true } };
     assert.ok(resurrect(state));
 });
 
@@ -360,7 +370,7 @@ test('the same position three times is a draw', () => {
 test('positions that look alike but differ in the grave or budget are not repeats', () => {
     const a = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
     const b = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
-    b.grave = { r: 3, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
+    b.graves.white = { r: 3, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
     assert.notEqual(positionKey(a), positionKey(b));
 
     const c = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { alchemistBudget: 3 });

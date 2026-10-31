@@ -19,7 +19,7 @@ test('moves are written in coordinates', () => {
 
 test('resurrections and conversions have their own notation', () => {
     const grave = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { whiteRuler: 'necromancer' });
-    grave.grave = { r: 3, c: 3, piece: { type: 'knight', color: 'black', hasMoved: true } };
+    grave.graves.white = { r: 3, c: 3, piece: { type: 'knight', color: 'black', hasMoved: true } };
     assert.equal(find(grave, 'N@d5').type, 'resurrect');
 
     const alchemy = fromFEN('4k3/8/8/8/3R4/8/8/4K3 w - - 0 1', { whiteRuler: 'alchemist' });

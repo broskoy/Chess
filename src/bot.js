@@ -89,7 +89,7 @@ function isCapture(state, move) {
 // then captures of valuable pieces by cheap ones, then raises and promotions.
 function orderMoves(state, moves) {
     const priority = move => {
-        if (move.type === 'resurrect') return 10 * PIECE_VALUES[state.grave.piece.type];
+        if (move.type === 'resurrect') return 10 * PIECE_VALUES[state.graves[state.turn].piece.type];
         if (move.type !== 'move') return 0;
         const target = getPiece(state, move.to.r, move.to.c);
         const promotion = move.promotion ? 10 * PIECE_VALUES[move.promotion] : 0;

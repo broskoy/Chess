@@ -28,10 +28,10 @@ Raises fallen enemies to fight for you.
 
 **How it works**
 
-- The square where the **most recent piece died** is the **grave** (marked with a purple border). There's only one grave. Every new capture moves it.
+- The square where **the last piece you captured** died is your **grave** (marked with a purple border). You have one grave, and your next capture moves it.
 - On your turn, instead of moving, you can **raise** the piece in the grave. It comes back on that square, on your side.
-- You can only raise **enemy pieces**. If the most recent piece to die was yours, the grave is useless to you until the next capture.
-- The grave square must be **empty**. Right after a capture, the capturing piece is standing on the grave, so it's blocked until that piece moves away.
+- You can only raise **enemy pieces**. Losing your own pieces doesn't change the grave, and your opponent's captures can't move it.
+- The grave square must be **empty**. Right after your capture, your own piece is standing on the grave, so it's blocked until a piece moves away. If the opponent recaptures, their piece stands on it instead.
 - A raised pawn has already used its first move, so it can't move two squares.
 - The purple box in your row shows the piece you could raise. It's faded while the grave is blocked, and glows when you can raise it.
 - When you can raise a piece, the grave's border pulses. Click the grave or your purple box to raise.
@@ -40,14 +40,14 @@ Raises fallen enemies to fight for you.
 
 - **The threat is worth more than the piece.** If a strong enemy piece is in the grave, whatever stands on that square can't leave without handing it to you. It's effectively pinned there, which ties up the opponent.
 - **Your own piece on the grave is a loaded trigger.** Move it away with a threat of its own (an attack or a check), and the opponent has two problems at once: deal with your threat, or let you raise the piece.
-- **Watch your own trades.** When you lose a piece, it fills the grave and pushes out whatever enemy piece was in there. Every trade has a hidden cost.
+- **Trades work for you.** After an exchange, the piece that recaptured is standing on your grave. If it moves, you raise what you captured, so it's tied down.
+- **Choose your captures.** Each capture replaces the grave. Taking a pawn while a queen is in there means giving up the queen.
 - **Patience pays.** The Necromancer is better in slow games than in races. It gets stronger as the board empties: locking one of the opponent's last major pieces hurts a lot.
 
 **Tips for playing against the Necromancer**
 
-- **Replace the grave.** If the Necromancer just won one of your strong pieces, capture any of their pieces, even a pawn. Now the grave holds their piece, which they can't raise, and your strong piece is gone for good instead of coming back against you.
 - **Keep the grave covered.** If a raised piece would just be captured again, raising it isn't a threat. Keep a piece aimed at the grave square and you can move freely.
-- **Use the grave as bait.** While your queen is in the grave, a piece of yours that looks free might not be: if the Necromancer takes it, that piece replaces your queen in the grave.
+- **Use the grave as bait.** While your queen is in the grave, offer the Necromancer something smaller. If they take it, that piece replaces your queen for good.
 - **Step off with care.** Moving your piece off the grave opens it. Do it when the raise wouldn't hurt, or when your move creates a bigger threat.
 
 ### Alchemist

@@ -92,7 +92,7 @@ test('the search finds a checkmate under standard rules', () => {
 
 test('the search raises a valuable piece from the grave when it can', () => {
     const state = fromFEN('4k3/8/8/8/8/8/8/4K3 w - - 0 1', { whiteRuler: 'necromancer' });
-    state.grave = { r: 4, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
+    state.graves.white = { r: 4, c: 3, piece: { type: 'queen', color: 'black', hasMoved: true } };
     assert.equal(searchMove(state, FAST).type, 'resurrect');
 });
 

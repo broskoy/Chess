@@ -16,7 +16,7 @@ export function squareName({ r, c }) {
 }
 
 export function moveToText(state, move) {
-    if (move.type === 'resurrect') return `${LETTERS[state.grave.piece.type]}@${squareName(move.to)}`;
+    if (move.type === 'resurrect') return `${LETTERS[state.graves[state.turn].piece.type]}@${squareName(move.to)}`;
     if (move.type === 'convert') return `${squareName(move.at)}=${LETTERS[move.into]}`;
     const promotion = move.promotion ? LETTERS[move.promotion].toLowerCase() : '';
     return squareName(move.from) + squareName(move.to) + promotion;

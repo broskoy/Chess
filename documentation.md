@@ -17,29 +17,28 @@ The first version let you drop captured pieces back onto the board (like shogi /
 ## Rulers
 
 ### Necromancer
-- There is **one grave** on the board: the square where the **most recent piece died**, from either side.
-- The grave holds that piece. A new death anywhere replaces the grave.
+- The **grave** is the square where the **last piece the Necromancer captured** died. It holds that piece, and the Necromancer's next capture replaces it.
 - **Resurrect:** the Necromancer spends their turn to raise the piece in the grave, on the grave's square, **in the Necromancer's color**.
-- **Only enemy pieces can be raised.** When one of the Necromancer's own pieces dies, the grave holds it and is useless to them until the next death.
-  - Why: raising your own pieces rewarded throwing strong pieces into danger, and reviving your own bishop with check felt more annoying than interesting. The Necromancer should grow by winning the opponent's pieces.
+- **Only enemy pieces can be raised, and the Necromancer's own deaths don't touch the grave.** The opponent's captures can't change it.
+  - Why only enemy pieces: raising your own rewarded throwing strong pieces into danger, and reviving your own bishop with check felt more annoying than interesting.
+  - Why own deaths don't count: originally the grave held the last death from either side, but in play the ability was rarely usable. The opponent could replace the grave with any capture, and an ordinary exchange replaced it straight away. Now a recapture leaves the enemy piece standing on the grave, tied down.
 - A raised piece counts as already moved, so a raised pawn has **no double step**.
 - The grave square must be **empty**. Right after a capture, the capturing piece stands on the grave and blocks it. The grave opens only once that piece moves away. This keeps the ability tame for now.
 - Range: anywhere on the board (the grave's location is the only constraint).
 - **Tactics this creates:**
   - The capturer can stay on the grave to block it, or step off and allow a resurrection.
   - The grave is usually on a contested square, so a raised piece may be captured again straight away. Keeping a threat on the grave is a defence.
-  - **Grave denial:** if the Necromancer just won a strong piece, the opponent can capture any Necromancer piece (even a pawn) to replace the grave with something the Necromancer can't raise.
   - **Bait:** while the opponent's queen is in the grave, a greedy capture by the Necromancer replaces it with a lesser piece. The Necromancer must weigh the material in front of them against the piece they could raise.
-  - The Necromancer's own trades close the grave, so trading has a hidden cost for them.
-  - With two Necromancers, only the side that did the killing can raise the piece.
+  - With two Necromancers, each has their own grave. After an exchange they can share a square, and whoever gets a turn first once it's empty raises their piece.
 - **The real value is the lock, not the material** (found in play-testing):
   - A grave holding a strong enemy piece is a standing threat. An opponent's piece on the grave is effectively **pinned** there: if it moves, the dead piece rises.
   - The Necromancer's own piece on the grave becomes a **trigger**: it can step off with a threat of its own (attack, check), leaving the opponent two problems at once, like a discovered attack.
-  - Ways out exist (replace the grave with another capture, cover the square, step off when the raise wouldn't hurt), but each costs a move or a commitment.
+  - Ways out exist (cover the square, step off when the raise wouldn't hurt), but each costs a move or a commitment.
   - So the Necromancer converts material into **time and tension**. It's stronger in slow positions than in races, which fits its defensive identity.
   - It gets **stronger later in the game**: with fewer pieces left, locking one of two major pieces stings more. A full test game was close.
   - No cheesy tactics found so far, and positions are harder to calculate for both sides, in a good way.
-- Possible buff: **two graves** holding the last two deaths. Probably unnecessary, and two locked squares may tie down too much of the board; also makes removing a strong piece for good harder.
+- Watch in play-testing: a dead queen now stays a threat until the Necromancer captures something else, so this could turn out too strong. If it does, a possible limit is the grave expiring after some turns.
+- Rejected buff: **two graves** holding the last two deaths. After an exchange both would sit on one square, which needs an extra rule for which piece rises, and denial would just take two captures.
 - For the bot: an evaluation that only counts material will misjudge the Necromancer. It needs to value a strong enemy piece in a grave that can open, and treat a piece standing on that grave as less free than it looks.
 
 ### Alchemist
@@ -101,7 +100,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Removed en passant
 - [x] Per-piece `hasMoved` flag; castling rights tracking
 - [x] Game-over message, restart, undo
-- [x] Threefold repetition is a draw. A position includes the board (and which pawns can still double step), turn, castling rights, the grave and the Alchemist budgets. The UI checks it over its list of positions; the engine state doesn't keep history, to keep copying cheap for the bot.
+- [x] Threefold repetition is a draw. A position includes the board (and which pawns can still double step), turn, castling rights, the graves and the Alchemist budgets. The UI checks it over its list of positions; the engine state doesn't keep history, to keep copying cheap for the bot.
 - Skipped for now: the 50-move rule. Probably rare here; add it if play-testing shows games dragging on. If added, conversions shouldn't reset the count (free knight-bishop swaps could stall forever).
 - Not a draw: lone rulers. Wandering around until someone slips up isn't fun, but abilities make "can anyone still win?" hard to decide. Idea for later: a 10-turn limit once both sides are below 5 material.
 - Later: post-game review (step back and forward through a finished game, or a copied one). Every position is already stored, so it's mostly UI.
@@ -110,7 +109,7 @@ These carry over from standard chess, with a few deliberate changes.
 - [x] Remove drops (engine, hands UI, drop settings)
 - [x] Each side has a ruler type (settings `whiteRuler` / `blackRuler`: plain king, Necromancer, later Alchemist)
 - [x] Track the grave: square and dead piece, updated on every capture
-- [x] Resurrect move, available when the grave is empty and the side's ruler is a Necromancer
+- [x] Resurrect move, available when the grave square is empty and the side's ruler is a Necromancer
 - [x] Show the grave on the board (purple border, also while a piece stands on it; a faded ghost of the dead piece while it's open, in the color it would rise as and with a pulsing border when you can raise it). Click the open grave to resurrect
 - [x] Choose your ruler in the main menu; ruler icons beside the board
 - [x] Tests for grave tracking, blocking, resurrection colors
@@ -203,7 +202,7 @@ First results (2026-10-31): 100 games per pair, depth 3, Alchemist budget 0. Wit
 - [tools/selfplay.mjs](tools/selfplay.mjs): plays bot-against-bot games and reports win rates.
 
 ### Engine design
-- **Game state is one plain object**: board, turn, castling rights, grave, Alchemist budgets and settings (including each side's ruler). Everything the rules depend on lives there.
+- **Game state is one plain object**: board, turn, castling rights, each Necromancer's grave, Alchemist budgets and settings (including each side's ruler). Everything the rules depend on lives there.
 - **Pure functions**: `applyMove(state, move)` returns a new state and never changes the old one. Pieces are never mutated, so copies can share them cheaply.
 - **Abilities are move types**, so the UI, undo and the bot handle them like any other move:
   - Board move: `{ type: 'move', from, to, castle?, promotion? }`

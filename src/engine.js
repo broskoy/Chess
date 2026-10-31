@@ -66,8 +66,8 @@ export function createInitialState(settings = {}) {
             white: { kingside: true, queenside: true },
             black: { kingside: true, queenside: true },
         },
-        // Where the most recent piece died: { r, c, piece }. A Necromancer can raise it.
-        grave: null,
+        // Each Necromancer's grave: where the last piece they captured died, { r, c, piece }.
+        graves: { white: null, black: null },
         settings: { ...DEFAULT_SETTINGS, ...settings },
     };
     // Alchemist points; only used by a side whose ruler is an Alchemist.
@@ -212,14 +212,13 @@ function castlingMoves(state, color) {
     return moves;
 }
 
-// A Necromancer can raise the piece in the grave if it was an enemy piece,
-// and only once nothing stands on it. Right after a capture the capturing
-// piece is on the grave, so it starts blocked. When one of the Necromancer's
-// own pieces dies, the grave holds it and can't be used until the next death.
+// A Necromancer can raise the last piece they captured, on the square where it
+// died, once nothing stands there. Right after the capture their own piece is on
+// the grave, so it starts blocked. Losing their own pieces doesn't change the grave:
+// a recapture leaves the enemy piece standing on it, tied down.
 function resurrectMoves(state) {
-    const { grave } = state;
+    const grave = state.graves[state.turn];
     if (rulerOf(state, state.turn) !== 'necromancer' || grave === null) return [];
-    if (grave.piece.color === state.turn) return [];
     if (state.board[grave.r][grave.c] !== null) return [];
     return [{ type: 'resurrect', to: { r: grave.r, c: grave.c } }];
 }
@@ -380,11 +379,12 @@ export function positionKey(state) {
         const symbol = p.color === WHITE ? letter.toUpperCase() : letter;
         return p.type === 'pawn' && !p.hasMoved ? symbol + '*' : symbol;
     });
-    const { castling, grave, budget } = state;
+    const { castling, graves, budget } = state;
     const rights = [castling.white.kingside, castling.white.queenside, castling.black.kingside, castling.black.queenside]
         .map(Number).join('');
-    const graveKey = grave ? `${grave.r}${grave.c}${grave.piece.color[0]}${grave.piece.type}` : '-';
-    return [squares.join(''), state.turn, rights, graveKey, budget.white, budget.black].join(' ');
+    const graveKey = grave => grave ? `${grave.r}${grave.c}${grave.piece.type}` : '-';
+    return [squares.join(''), state.turn, rights, graveKey(graves.white), graveKey(graves.black),
+        budget.white, budget.black].join(' ');
 }
 
 // True when the last state in `history` has occurred at least three times.
@@ -403,6 +403,7 @@ function cloneState(state) {
         board: state.board.map(row => row.slice()),
         castling: { white: { ...state.castling.white }, black: { ...state.castling.black } },
         budget: { ...state.budget },
+        graves: { ...state.graves },
     };
 }
 
@@ -417,7 +418,9 @@ export function applyMove(state, move) {
     const { from, to } = move;
     const piece = next.board[from.r][from.c];
     const captured = next.board[to.r][to.c];
-    if (captured && captured.type !== 'king') next.grave = { r: to.r, c: to.c, piece: captured };
+    if (captured && captured.type !== 'king' && rulerOf(state, color) === 'necromancer') {
+        next.graves[color] = { r: to.r, c: to.c, piece: captured };
+    }
 
     next.board[to.r][to.c] = move.promotion
         ? makePiece(move.promotion, piece.color, { hasMoved: true })
@@ -437,11 +440,11 @@ export function applyMove(state, move) {
 
 // `next` is already a copy of the state, so it can be changed in place.
 function applyResurrect(next, color) {
-    const { r, c, piece } = next.grave;
+    const { r, c, piece } = next.graves[color];
     // The raised enemy piece joins the Necromancer's side.
     // It counts as moved, so a raised pawn has no double step.
     next.board[r][c] = makePiece(piece.type, color, { hasMoved: true });
-    next.grave = null;
+    next.graves[color] = null;
     next.turn = opponent(color);
     return next;
 }

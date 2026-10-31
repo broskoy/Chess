@@ -187,7 +187,9 @@ class ChessUI {
         board.innerHTML = '';
         const targets = this.selectedMoves().map(m => m.to);
         const checkedKing = this.status.inCheck ? findKing(this.state, this.state.turn) : null;
-        const { grave } = this.state;
+        // Two Necromancers' graves can share a square; the side to move's is shown.
+        const graveOwners = [this.state.turn, opponent(this.state.turn)]
+            .filter(color => this.state.graves[color] !== null);
         const canRaise = this.resurrectMove() !== null && this.status.result === 'playing';
         const lastMove = this.moves[this.moves.length - 1] ?? null;
         // A resurrection only has the square where the piece rose, a conversion only the piece's square.
@@ -212,7 +214,8 @@ class ChessUI {
                 if (sameSquare(this.selected, square)) tile.classList.add('selected');
                 if (sameSquare(checkedKing, square)) tile.classList.add('in-check');
                 if (targets.some(t => sameSquare(t, square))) tile.classList.add('highlight');
-                if (sameSquare(grave, square)) this.decorateGrave(tile, piece, canRaise);
+                const owner = graveOwners.find(color => sameSquare(this.state.graves[color], square));
+                if (owner) this.decorateGrave(tile, piece, owner, canRaise && owner === this.state.turn);
                 if (piece && piece.type === 'king') tile.classList.add(`ruler-${rulerOf(this.state, piece.color)}`);
 
                 tile.onclick = () => this.handleTileClick(r, c);
@@ -224,11 +227,11 @@ class ChessUI {
     // The grave has a purple border, even with a piece standing on it. While it's
     // open, a faded ghost shows the dead piece; when the side to move can raise it,
     // the ghost takes their color (the color it would rise as) and the border pulses.
-    decorateGrave(tile, piece, canRaise) {
+    decorateGrave(tile, piece, owner, canRaise) {
         tile.classList.add('grave');
         if (piece) return;
-        const dead = this.state.grave.piece;
-        const color = canRaise ? this.state.turn : dead.color;
+        const dead = this.state.graves[owner].piece;
+        const color = canRaise ? owner : dead.color;
         // The ghost is its own element so fading it doesn't fade the square.
         const ghost = document.createElement('span');
         ghost.className = `ghost ${color}-piece`;
@@ -279,8 +282,8 @@ class ChessUI {
         }
 
         element.classList.add('necromancer');
-        const { grave } = this.state;
-        if (grave === null || grave.piece.color === color) {
+        const grave = this.state.graves[color];
+        if (grave === null) {
             element.title = 'Grave: nothing to raise';
             return;
         }
