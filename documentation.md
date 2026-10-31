@@ -152,6 +152,15 @@ First results (2026-10-31): 100 games per pair, depth 3, Alchemist budget 0. Wit
 - The Alchemist is the strongest ruler already at budget 0, so the earlier idea of giving it a bigger starting budget looks unnecessary.
 - How it wins (10 inspected games, 107 conversions): mostly breaking big pieces into small ones. It downgrades a queen or rook to a bishop or knight, then spends the points turning pawns into minor pieces. Only 21 of the conversions were on an attacked piece. This matches the "more pieces beat bigger pieces" tip, but it could partly come from the evaluation's center bonus for minor pieces, or from shallow bots handling many minor pieces badly. Worth checking against a human.
 
+After the grave change (it now holds the last piece the Necromancer captured), same settings and seed. Pairs without a Necromancer came out identical, as they should:
+
+| Pair (A vs B) | A wins | B wins | Draws | Unfinished | Ability uses per game (A / B) |
+|---|---|---|---|---|---|
+| King vs Necromancer | 14 | 65 | 19 | 2 | 0 / 2.5 |
+| Necromancer vs Alchemist | 42 | 38 | 18 | 2 | 2.3 / 11.7 |
+
+- Raises roughly doubled per game, and the Necromancer went from losing 2 to 1 against the Alchemist to about even. With these bots it's now as strong against the King as the Alchemist is.
+
 ### Phase 5 — Rounds and armies
 - [ ] Multiple rounds against the bot with different rulers
 - [ ] Army budgets and different starting setups
