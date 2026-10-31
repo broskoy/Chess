@@ -1,7 +1,9 @@
 // Plays bot-against-bot games and reports win rates, for checking ruler balance
 // and tuning the bot.
 //
-//   node tools/selfplay.mjs [--games 40] [--depth 3] [--budget 0] [--seed 1]
+//   node tools/selfplay.mjs [--games 40] [--depth 3] [--budget 0] [--seed 1] [--workers N]
+//
+// Uses half of the CPU cores by default, so the machine stays usable; --workers changes that.
 //
 // Every pair of rulers plays the given number of games, swapping colors each game.
 // The bots search to a fixed depth rather than for a fixed time, so the results
@@ -56,7 +58,7 @@ function playGame({ first, second, depth, budget, seed }) {
 }
 
 function parseOptions() {
-    const options = { games: 40, depth: 3, budget: 0, seed: 1 };
+    const options = { games: 40, depth: 3, budget: 0, seed: 1, workers: Math.ceil(cpus().length / 2) };
     const args = process.argv.slice(2);
     for (let i = 0; i < args.length; i += 2) {
         const name = args[i].replace(/^--/, '');
@@ -124,7 +126,7 @@ function runAll() {
         console.log(`\n${results.length} games in ${((Date.now() - started) / 1000).toFixed(0)}s`);
     };
 
-    const count = Math.min(cpus().length, jobs.length);
+    const count = Math.min(options.workers, jobs.length);
     let running = count;
     for (let i = 0; i < count; i++) {
         const worker = new Worker(fileURLToPath(import.meta.url));
